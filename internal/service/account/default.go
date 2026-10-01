@@ -56,21 +56,29 @@ func (as defaultAccountService) GetCredentials() (string, string) {
 	return login, password
 }
 
-func (as defaultAccountService) GetKindleId() uint64 {
+func (as defaultAccountService) GetKindleId() (uint64, error) {
 	kindleId := as.accountRepository.GetKindleId()
 	// if kindle id is not in repository
 	if kindleId == 0 {
 		// ask user for Kindle Serial No
 		fmt.Print("Enter Kindle Serial Number: ")
 		var kindleSerialNumber string
-		fmt.Scanln(&kindleSerialNumber)
+		if _, err := fmt.Scanln(&kindleSerialNumber); err != nil {
+			return 0, fmt.Errorf("couldn't read Kindle Serial Number: %v", err)
+		}
 		// then query api for kindle id
 		var registered model.Register
 		login, password := as.GetCredentials()
-		as.client.Exchange(model.NewRegisterRequest(login, password, kindleSerialNumber), &registered)
+		err := as.client.Exchange(model.NewRegisterRequest(login, password, kindleSerialNumber), &registered)
+		if err != nil {
+			return 0, fmt.Errorf("couldn't register Kindle: %v", err)
+		}
+		if registered.KindleId == 0 {
+			return 0, fmt.Errorf("couldn't register Kindle: no Kindle id received")
+		}
 		kindleId = registered.KindleId
 		// and store result in repository
 		as.accountRepository.SaveKindleId(kindleId)
 	}
-	return kindleId
+	return kindleId, nil
 }

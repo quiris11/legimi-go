@@ -24,7 +24,7 @@ func Decode(r io.Reader, value any) (int, error) {
 }
 
 func SkipDecode(r io.Reader, n int) (int, error) {
-	return r.Read(make([]byte, n))
+	return io.ReadFull(r, make([]byte, n))
 }
 
 func SkipDecodeMany(r io.Reader, toSkip []int) (bytesSkip int, err error) {

@@ -13,9 +13,12 @@ type defaultSessionService struct {
 
 func (ss defaultSessionService) GetSession() (string, error) {
 	login, password := ss.accountService.GetCredentials()
-	kindleId := ss.accountService.GetKindleId()
+	kindleId, err := ss.accountService.GetKindleId()
+	if err != nil {
+		return "", err
+	}
 	var session model.Session
-	err := ss.client.Exchange(model.NewGetSessionRequest(login, password, kindleId), &session)
+	err = ss.client.Exchange(model.NewGetSessionRequest(login, password, kindleId), &session)
 	if err != nil {
 		return "", err
 	}

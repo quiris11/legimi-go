@@ -11,7 +11,7 @@ type Session interface {
 
 type Account interface {
 	GetCredentials() (string, string)
-	GetKindleId() uint64
+	GetKindleId() (uint64, error)
 }
 
 type Book interface {

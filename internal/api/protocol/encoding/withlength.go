@@ -34,7 +34,7 @@ func decodeWithLength(r io.Reader, value any, length int) (int, error) {
 	case *string:
 		// special case for strings - we need length value to read correct number of bytes
 		bytes := make([]byte, length)
-		bytesRead, err := r.Read(bytes)
+		bytesRead, err := io.ReadFull(r, bytes)
 		if err != nil {
 			return bytesRead, err
 		}

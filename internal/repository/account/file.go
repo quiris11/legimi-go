@@ -19,14 +19,34 @@ func newFileAccountRepository(configFile string) repository.Account {
 	file, err := ini.Load(configFile)
 	if err != nil {
 		file = ini.Empty()
-		os.MkdirAll(path.Dir(configFile), 0755)
-		file.SaveTo(configFile)
+		os.MkdirAll(path.Dir(configFile), 0700)
+	} else {
+		// restrict permissions of configuration files created by previous versions
+		os.Chmod(configFile, 0600)
 	}
-	return &fileAccountRepository{
+	far := &fileAccountRepository{
 		filePath: configFile,
 		file:     file,
 		config:   file.Section(""),
 	}
+	if err != nil {
+		far.save()
+	}
+	return far
+}
+
+// save writes configuration file readable only by its owner, as it contains credentials
+func (far fileAccountRepository) save() error {
+	f, err := os.OpenFile(far.filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if err := f.Chmod(0600); err != nil {
+		return err
+	}
+	_, err = far.file.WriteTo(f)
+	return err
 }
 
 func (far fileAccountRepository) GetLogin() string {
@@ -56,17 +76,17 @@ func (far fileAccountRepository) GetKindleId() uint64 {
 func (far fileAccountRepository) SaveLogin(login string) {
 	key := far.config.Key("login")
 	key.SetValue(login)
-	far.file.SaveTo(far.filePath)
+	far.save()
 }
 
 func (far fileAccountRepository) SavePassword(password string) {
 	key := far.config.Key("password")
 	key.SetValue(password)
-	far.file.SaveTo(far.filePath)
+	far.save()
 }
 
 func (far fileAccountRepository) SaveKindleId(kindleId uint64) {
 	key := far.config.Key("kindleId")
 	key.SetValue(fmt.Sprint(kindleId))
-	far.file.SaveTo(far.filePath)
+	far.save()
 }

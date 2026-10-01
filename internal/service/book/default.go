@@ -130,10 +130,17 @@ func (bs defaultBookService) download(book model.BookMetadata, downloadDetails m
 		if err != nil {
 			return err
 		}
+		if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusPartialContent {
+			response.Body.Close()
+			return fmt.Errorf("unexpected download response status: %s", response.Status)
+		}
 		bytesRead, err := file.ReadFrom(response.Body)
 		response.Body.Close()
 		if err != nil {
 			return err
+		}
+		if bytesRead == 0 {
+			return fmt.Errorf("download stalled at %d of %d bytes", downloadedBytes, downloadDetails.Size)
 		}
 		downloadedBytes += uint64(bytesRead)
 		bs.downloadPresenter.Part(book)
