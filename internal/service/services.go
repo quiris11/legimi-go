@@ -25,6 +25,10 @@ type BookListPresenter interface {
 	Present([]model.BookMetadata, model.DownloadLimit)
 }
 
+type BookSelector interface {
+	Select([]model.BookMetadata, model.DownloadLimit) ([]uint64, error)
+}
+
 type DownloadPresenter interface {
 	Start(model.BookMetadata)
 	Part(model.BookMetadata)

@@ -28,6 +28,7 @@ var (
 	Commands = []Command{
 		{name: "list", Run: listBooks, description: "list books on shelf"},
 		{name: "download", args: "id ...", Run: downloadBooks, description: "download book(s) with given id(s)"},
+		{name: "select", Run: selectBooks, description: "select book(s) to download from interactive list"},
 		{name: "version", Run: printVersion, description: "print version of script"},
 	}
 )
@@ -63,6 +64,7 @@ var (
 	BookLister        usecase.BookLister
 	BookListPresenter service.BookListPresenter
 	BookDownloader    usecase.BookDownloader
+	BookSelector      service.BookSelector
 )
 
 func listBooks() error {
@@ -72,6 +74,18 @@ func listBooks() error {
 	}
 	BookListPresenter.Present(bookList, downloadLimit)
 	return nil
+}
+
+func selectBooks() error {
+	bookList, downloadLimit, err := BookLister.ListBooks()
+	if err != nil {
+		return err
+	}
+	bookIds, err := BookSelector.Select(bookList, downloadLimit)
+	if err != nil || len(bookIds) == 0 {
+		return err
+	}
+	return BookDownloader.DownloadBooks(bookIds)
 }
 
 func downloadBooks() error {

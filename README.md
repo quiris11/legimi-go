@@ -83,6 +83,17 @@ Available commands are:
 -   `download <id> ...`
 
     Download book(s) given their id(s). Book id can be obtained by listing books (first value in book entry line).
+    Note that Legimi removes book from the list (but not from your shelf on Legimi website) once its download is requested,
+    even if download fails. Metadata of listed books is remembered in `config-books.json` file next to configuration file,
+    so book can be downloaded again by its id.
+    Book file is downloaded to `<id>.mobi.part` and renamed to `<id>.mobi` only when it's complete and verified.
+
+-   `select`
+
+    Select book(s) to download from interactive list, without typing their ids.
+    Books not downloaded yet are shown first. Type to filter by author or title (case and Polish diacritics are ignored),
+    move with arrow keys (also Page Up/Down, Home, End), select books with Space, press Enter to download selected books
+    (or the book under cursor if none is selected) and confirm with `y`. Press Esc to quit without downloading.
 
 -   `version`
 

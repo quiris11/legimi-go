@@ -4,6 +4,7 @@ import (
 	"github.com/tp86/legimi-go/internal/api"
 	"github.com/tp86/legimi-go/internal/commands"
 	ar "github.com/tp86/legimi-go/internal/repository/account"
+	br "github.com/tp86/legimi-go/internal/repository/book"
 	as "github.com/tp86/legimi-go/internal/service/account"
 	"github.com/tp86/legimi-go/internal/service/book"
 	"github.com/tp86/legimi-go/internal/service/presenter"
@@ -16,8 +17,9 @@ func configure() {
 	accountService := as.DefaultService(accountRepository, apiClient, commands.Options)
 	sessionService := session.DefaultService(accountService, apiClient)
 	bookDownloadPresenter := presenter.DefaultBookDownloadPresenter()
-	bookService := book.DefaultService(sessionService, apiClient, bookDownloadPresenter)
+	bookService := book.DefaultService(sessionService, apiClient, bookDownloadPresenter, br.GetFileRepository(commands.Options))
 	commands.BookLister = bookService
 	commands.BookDownloader = bookService
 	commands.BookListPresenter = presenter.DefaultBookListPresenter()
+	commands.BookSelector = presenter.DefaultBookSelector()
 }

@@ -6,6 +6,10 @@ func DefaultBookListPresenter() service.BookListPresenter {
 	return defaultBookListPresenter{}
 }
 
+func DefaultBookSelector() service.BookSelector {
+	return terminalBookSelector{}
+}
+
 func DefaultBookDownloadPresenter() service.DownloadPresenter {
 	return defaultBookDownloadPresenter{}
 }

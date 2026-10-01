@@ -104,16 +104,44 @@ func downloadChunk(client *http.Client, file *os.File, downloadDetails model.Boo
 			return 0, err
 		}
 	case http.StatusOK:
-		// server ignored requested range and sends whole book - correct only at the beginning
-		if offset != 0 {
-			return 0, fmt.Errorf("received whole book instead of part starting at byte %d", offset)
+		if contentRange := response.Header.Get("Content-Range"); contentRange != "" {
+			end, err = checkContentRange(contentRange, offset, end, downloadDetails.Size)
+			if err != nil {
+				return 0, err
+			}
+			break
 		}
-		end = downloadDetails.Size
+		return writeUnlabeledChunk(file, response.Body, downloadDetails.Size, offset, end)
 	default:
 		return 0, fmt.Errorf("unexpected download response status: %s", response.Status)
 	}
 	expected := end - offset
 	written, err := io.Copy(file, io.LimitReader(response.Body, int64(expected)))
+	if err == nil && uint64(written) < expected {
+		err = fmt.Errorf("received %d of %d bytes", written, expected)
+	}
+	return uint64(written), err
+}
+
+// writeUnlabeledChunk handles response without information which part of the book it contains.
+// Legimi server answers range requests this way (status 200 with only requested part);
+// a server ignoring range would send whole book instead, which is correct only at the beginning.
+func writeUnlabeledChunk(file *os.File, body io.Reader, size, offset, end uint64) (uint64, error) {
+	expected := end - offset
+	limit := expected
+	if offset == 0 {
+		limit = size
+	}
+	// chunk is checked before it is written, so that unexpected data never gets into the file
+	data, err := io.ReadAll(io.LimitReader(body, int64(limit)+1))
+	if err != nil {
+		return 0, err
+	}
+	received := uint64(len(data))
+	if received > expected && !(offset == 0 && received == size) {
+		return 0, fmt.Errorf("received %d bytes, requested %d bytes starting at byte %d", received, expected, offset)
+	}
+	written, err := file.Write(data)
 	if err == nil && uint64(written) < expected {
 		err = fmt.Errorf("received %d of %d bytes", written, expected)
 	}

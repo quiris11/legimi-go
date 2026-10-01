@@ -131,6 +131,20 @@ func TestDownloadWhenServerIgnoresRange(t *testing.T) {
 	}
 }
 
+// Legimi server responds to range requests with status 200 and only requested part of the book
+func TestDownloadWhenServerSendsPartWithStatusOK(t *testing.T) {
+	book := makeMobi(30, 10000)
+	data, err := downloadFromServer(t, book, func(n int, w http.ResponseWriter, first, last int) bool {
+		last = min(last, len(book)-1)
+		w.WriteHeader(http.StatusOK)
+		w.Write(book[first : last+1])
+		return true
+	})
+	if err != nil || !bytes.Equal(data, book) {
+		t.Errorf("downloaded book differs from original, error: %v", err)
+	}
+}
+
 func TestDownloadFailsOnServerMisbehavior(t *testing.T) {
 	book := makeMobi(30, 10000)
 	tests := map[string]func(int, http.ResponseWriter, int, int) bool{
@@ -153,6 +167,20 @@ func TestDownloadFailsOnServerMisbehavior(t *testing.T) {
 			}
 			w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", first-100, last-100, len(book)))
 			w.WriteHeader(http.StatusPartialContent)
+			w.Write(book[first-100 : last-99])
+			return true
+		},
+		"more than requested with status OK": func(n int, w http.ResponseWriter, first, last int) bool {
+			w.WriteHeader(http.StatusOK)
+			w.Write(book[first:min(len(book), last+1000)])
+			return true
+		},
+		"wrong part with status OK and Content-Range": func(n int, w http.ResponseWriter, first, last int) bool {
+			if first == 0 {
+				return false
+			}
+			w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", first-100, last-100, len(book)))
+			w.WriteHeader(http.StatusOK)
 			w.Write(book[first-100 : last-99])
 			return true
 		},

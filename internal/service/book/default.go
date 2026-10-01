@@ -3,11 +3,13 @@ package book
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/tp86/legimi-go/internal/api"
 	"github.com/tp86/legimi-go/internal/api/protocol"
 	"github.com/tp86/legimi-go/internal/model"
+	"github.com/tp86/legimi-go/internal/repository"
 	"github.com/tp86/legimi-go/internal/service"
 )
 
@@ -15,6 +17,7 @@ type defaultBookService struct {
 	sessionService    service.Session
 	client            api.Client
 	downloadPresenter service.DownloadPresenter
+	bookRepository    repository.Book
 }
 
 func (bs defaultBookService) ListBooks() ([]model.BookMetadata, model.DownloadLimit, error) {
@@ -39,6 +42,9 @@ func (bs defaultBookService) ListBooks() ([]model.BookMetadata, model.DownloadLi
 			list = append(list, book)
 		}
 		request.NextPage = bookList[len(bookList)-1].NextPage
+	}
+	if err := bs.bookRepository.Save(list); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: couldn't remember books metadata: %v\n", err)
 	}
 	return list, limit, nil
 }
@@ -78,33 +84,40 @@ func (bs defaultBookService) getBookMetadata(sessionId string, bookId uint64) (m
 	if err != nil {
 		return model.BookMetadata{}, err
 	}
+	if len(bookList) == 0 {
+		// Legimi removes book from shelf listing once its download is requested
+		if book, ok := bs.bookRepository.Get(bookId); ok {
+			return book, nil
+		}
+		// version not lower than current one is accepted and current book file is sent
+		return model.BookMetadata{Id: bookId, Version: 1, Title: "(title unknown)"}, nil
+	}
 	if len(bookList) != 1 {
 		return model.BookMetadata{}, fmt.Errorf("unexpected book metadata list count: %d, expected 1", len(bookList))
 	}
 	return bookList[0], nil
 }
 
-const maxDownloadDetailsGetAttempts = 5
+// preparing book file by Legimi may take a while, wait with increasing delays
+var downloadDetailsDelays = []time.Duration{2, 3, 5, 10, 15, 20, 30, 30, 30, 30}
+
+const downloadDetailsDelayUnit = time.Second
 
 func (bs defaultBookService) getBookDownloadDetails(sessionId string, book model.BookMetadata) (model.BookDownloadDetails, error) {
 	downloadDetailsRequest := model.NewBookDownloadDetailsRequest(sessionId, book.Id, book.Version)
 	var bookDownloadDetails model.BookDownloadDetails
 	// TODO refactor & test
-	attempt := 0
-	for ; attempt < maxDownloadDetailsGetAttempts; attempt++ {
-		if err := bs.client.Exchange(downloadDetailsRequest, &bookDownloadDetails); err != nil {
-			if err, ok := err.(protocol.ErrorResponse); ok && err.Type == protocol.BookDownloadDetailsPreparingError {
-				// special case - download details are being prepared, try to repeat after some time
-				bs.downloadPresenter.Wait(book)
-				time.Sleep(2 * time.Second)
-				continue
-			}
+	for _, delay := range downloadDetailsDelays {
+		err := bs.client.Exchange(downloadDetailsRequest, &bookDownloadDetails)
+		if err == nil {
+			return bookDownloadDetails, nil
+		}
+		if err, ok := err.(protocol.ErrorResponse); !ok || err.Type != protocol.BookDownloadDetailsPreparingError {
 			return bookDownloadDetails, err
 		}
-		break
+		// special case - download details are being prepared, try to repeat after some time
+		bs.downloadPresenter.Wait(book)
+		time.Sleep(delay * downloadDetailsDelayUnit)
 	}
-	if attempt == maxDownloadDetailsGetAttempts {
-		return bookDownloadDetails, fmt.Errorf("couldn't get download details after %d attempts, try downloading book again after some time", attempt)
-	}
-	return bookDownloadDetails, nil
+	return bookDownloadDetails, fmt.Errorf("book %d is still being prepared by Legimi, try downloading it again later with: download %d", book.Id, book.Id)
 }
