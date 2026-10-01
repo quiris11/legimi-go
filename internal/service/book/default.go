@@ -100,9 +100,8 @@ func (bs defaultBookService) getBookMetadata(sessionId string, bookId uint64) (m
 		if !ok {
 			book = model.BookMetadata{Id: bookId, Title: "(title unknown)"}
 		}
-		if book.Version == 0 {
-			book.Version, err = bs.findCurrentVersion(sessionId, bookId)
-		}
+		// remembered version may be outdated (new edition released since), always download current one
+		book.Version, err = bs.findCurrentVersion(sessionId, bookId)
 		return book, err
 	}
 	if len(bookList) != 1 {
