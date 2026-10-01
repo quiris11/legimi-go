@@ -2,6 +2,12 @@ package presenter
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"slices"
+
+	"golang.org/x/text/collate"
+	"golang.org/x/text/language"
 
 	"github.com/tp86/legimi-go/internal/model"
 )
@@ -9,14 +15,51 @@ import (
 type defaultBookListPresenter struct{}
 
 func (defaultBookListPresenter) Present(bookList []model.BookMetadata, downloadLimit model.DownloadLimit) {
+	presentBookList(os.Stdout, bookList, downloadLimit)
+}
+
+func presentBookList(w io.Writer, bookList []model.BookMetadata, downloadLimit model.DownloadLimit) {
+	if len(bookList) == 0 {
+		fmt.Fprintln(w, "No books on shelf.")
+	}
+	var downloaded, notDownloaded []model.BookMetadata
 	for _, book := range bookList {
-		fmt.Printf("%8d: \"%s\", %s, downloaded: %t\n", book.Id, book.Title, book.Author, book.Downloaded)
+		if book.Downloaded {
+			downloaded = append(downloaded, book)
+		} else {
+			notDownloaded = append(notDownloaded, book)
+		}
 	}
+	presentSection(w, "Downloaded", downloaded)
+	presentSection(w, "Not downloaded", notDownloaded)
 	if downloadLimit.IsKnown() {
-		fmt.Printf("\nDownloads left: %d of %d\n", downloadLimit.Left, downloadLimit.Max)
+		fmt.Fprintf(w, "Downloads left: %d of %d\n", downloadLimit.Left, downloadLimit.Max)
 	} else {
-		fmt.Println("\nDownloads left: unknown (is your Legimi package active?)")
+		fmt.Fprintln(w, "Downloads left: unknown (is your Legimi package active?)")
 	}
+}
+
+func presentSection(w io.Writer, header string, books []model.BookMetadata) {
+	if len(books) == 0 {
+		return
+	}
+	sortByAuthorAndTitle(books)
+	fmt.Fprintf(w, "%s (%d):\n", header, len(books))
+	for _, book := range books {
+		fmt.Fprintf(w, "%8d: %s - \"%s\"\n", book.Id, book.Author, book.Title)
+	}
+	fmt.Fprintln(w)
+}
+
+func sortByAuthorAndTitle(books []model.BookMetadata) {
+	// Polish alphabetical order, e.g. "Ł" between "L" and "M"
+	collator := collate.New(language.Polish, collate.IgnoreCase)
+	slices.SortStableFunc(books, func(a, b model.BookMetadata) int {
+		if c := collator.CompareString(a.Author, b.Author); c != 0 {
+			return c
+		}
+		return collator.CompareString(a.Title, b.Title)
+	})
 }
 
 type defaultBookDownloadPresenter struct{}
