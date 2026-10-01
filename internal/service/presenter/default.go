@@ -76,6 +76,10 @@ func (defaultBookDownloadPresenter) End(book model.BookMetadata) {
 	fmt.Println(" done")
 }
 
+func (defaultBookDownloadPresenter) Fail(book model.BookMetadata) {
+	fmt.Println(" failed")
+}
+
 func (defaultBookDownloadPresenter) Wait(book model.BookMetadata) {
 	fmt.Printf("Waiting for book %d: \"%s\" to be ready for download.\n", book.Id, book.Title)
 }

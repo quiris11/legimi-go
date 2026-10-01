@@ -3,8 +3,6 @@ package book
 import (
 	"errors"
 	"fmt"
-	"net/http"
-	"os"
 	"time"
 
 	"github.com/tp86/legimi-go/internal/api"
@@ -109,44 +107,4 @@ func (bs defaultBookService) getBookDownloadDetails(sessionId string, book model
 		return bookDownloadDetails, fmt.Errorf("couldn't get download details after %d attempts, try downloading book again after some time", attempt)
 	}
 	return bookDownloadDetails, nil
-}
-
-const downloadChunkSize uint64 = 81920
-
-func (bs defaultBookService) download(book model.BookMetadata, downloadDetails model.BookDownloadDetails) error {
-	bs.downloadPresenter.Start(book)
-	file, err := os.Create(fmt.Sprintf("%d.mobi", book.Id))
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	client := http.Client{Timeout: 30 * time.Second}
-	request, err := http.NewRequest(http.MethodGet, downloadDetails.Url, nil)
-	if err != nil {
-		return err
-	}
-	var downloadedBytes uint64 = 0
-	for i := uint64(0); downloadedBytes < downloadDetails.Size; i++ {
-		request.Header.Set("range", fmt.Sprintf("bytes=%d-%d", i*downloadChunkSize, min((i+1)*downloadChunkSize-1, downloadDetails.Size)))
-		response, err := client.Do(request)
-		if err != nil {
-			return err
-		}
-		if response.StatusCode != http.StatusOK && response.StatusCode != http.StatusPartialContent {
-			response.Body.Close()
-			return fmt.Errorf("unexpected download response status: %s", response.Status)
-		}
-		bytesRead, err := file.ReadFrom(response.Body)
-		response.Body.Close()
-		if err != nil {
-			return err
-		}
-		if bytesRead == 0 {
-			return fmt.Errorf("download stalled at %d of %d bytes", downloadedBytes, downloadDetails.Size)
-		}
-		downloadedBytes += uint64(bytesRead)
-		bs.downloadPresenter.Part(book)
-	}
-	bs.downloadPresenter.End(book)
-	return nil
 }
