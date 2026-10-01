@@ -22,4 +22,5 @@ func configure() {
 	commands.BookDownloader = bookService
 	commands.BookListPresenter = presenter.DefaultBookListPresenter()
 	commands.BookSelector = presenter.DefaultBookSelector()
+	commands.DeviceRefresher = accountService
 }

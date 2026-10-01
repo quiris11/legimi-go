@@ -51,6 +51,7 @@ func TestBookListShowsLocalDownloads(t *testing.T) {
 		`1: A - "Listed" [downloaded with legimi-go 2026-01-15 18:30]` + "\n",
 		`2: B - "Hidden" [downloaded with legimi-go 2026-01-15 18:30] [hidden by Legimi after download request]` + "\n",
 		"Not downloaded (1):\n       3: C - \"Hidden, not downloaded\" [hidden by Legimi after download request]\n",
+		"2 book(s) hidden by Legimi after download request, use refresh command to list them again.\n",
 	} {
 		if !strings.Contains(out.String(), expected) {
 			t.Errorf("output doesn't contain %q:\n%s", expected, out.String())

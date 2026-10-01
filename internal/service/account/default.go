@@ -84,29 +84,58 @@ func (as *defaultAccountService) SaveCredentials() {
 
 func (as *defaultAccountService) GetKindleId() (uint64, error) {
 	kindleId := as.accountRepository.GetKindleId()
-	// if kindle id is not in repository
-	if kindleId == 0 {
-		// ask user for Kindle Serial No
-		fmt.Print("Enter Kindle Serial Number: ")
-		var kindleSerialNumber string
-		if _, err := fmt.Scanln(&kindleSerialNumber); err != nil {
-			return 0, fmt.Errorf("couldn't read Kindle Serial Number: %v", err)
-		}
-		// then query api for kindle id
-		var registered model.Register
-		login, password := as.GetCredentials()
-		err := as.client.Exchange(model.NewRegisterRequest(login, password, kindleSerialNumber), &registered)
-		if err != nil {
-			return 0, fmt.Errorf("couldn't register Kindle: %v", err)
-		}
-		if registered.KindleId == 0 {
-			return 0, fmt.Errorf("couldn't register Kindle: no Kindle id received")
-		}
-		// successful registration confirms credentials
-		as.SaveCredentials()
-		kindleId = registered.KindleId
-		// and store result in repository
-		as.accountRepository.SaveKindleId(kindleId)
+	if kindleId != 0 {
+		return kindleId, nil
 	}
-	return kindleId, nil
+	serialNumber, err := as.getKindleSerialNumber()
+	if err != nil {
+		return 0, err
+	}
+	return as.register(serialNumber)
+}
+
+// RefreshDevice registers Kindle again. Legimi hides book from shelf listing for device once its download
+// is requested; registration resets device state, so such books are listed again.
+func (as *defaultAccountService) RefreshDevice() (uint64, error) {
+	previousKindleId := as.accountRepository.GetKindleId()
+	serialNumber, err := as.getKindleSerialNumber()
+	if err != nil {
+		return 0, err
+	}
+	kindleId, err := as.register(serialNumber)
+	if err == nil && previousKindleId != 0 && kindleId != previousKindleId {
+		fmt.Fprintf(os.Stderr, "Warning: Legimi assigned new Kindle id %d (previously %d), check Kindle serial number in configuration file\n",
+			kindleId, previousKindleId)
+	}
+	return kindleId, err
+}
+
+func (as *defaultAccountService) getKindleSerialNumber() (string, error) {
+	if serialNumber := as.accountRepository.GetKindleSerialNumber(); serialNumber != "" {
+		return serialNumber, nil
+	}
+	fmt.Print("Enter Kindle Serial Number: ")
+	var serialNumber string
+	if _, err := fmt.Scanln(&serialNumber); err != nil {
+		return "", fmt.Errorf("couldn't read Kindle Serial Number: %v", err)
+	}
+	return serialNumber, nil
+}
+
+// register queries Legimi for Kindle id and stores it with serial number
+func (as *defaultAccountService) register(serialNumber string) (uint64, error) {
+	var registered model.Register
+	login, password := as.GetCredentials()
+	err := as.client.Exchange(model.NewRegisterRequest(login, password, serialNumber), &registered)
+	if err != nil {
+		return 0, fmt.Errorf("couldn't register Kindle: %v", err)
+	}
+	if registered.KindleId == 0 {
+		return 0, fmt.Errorf("couldn't register Kindle: no Kindle id received")
+	}
+	// successful registration confirms credentials
+	as.SaveCredentials()
+	as.accountRepository.SaveKindleId(registered.KindleId)
+	as.accountRepository.SaveKindleSerialNumber(serialNumber)
+	return registered.KindleId, nil
 }

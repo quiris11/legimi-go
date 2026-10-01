@@ -29,6 +29,7 @@ var (
 		{name: "list", Run: listBooks, description: "list books on shelf"},
 		{name: "download", args: "id ...", Run: downloadBooks, description: "download book(s) with given id(s)"},
 		{name: "select", Run: selectBooks, description: "select book(s) to download from interactive list"},
+		{name: "refresh", Run: refreshDevice, description: "register Kindle again, so that books hidden by Legimi after download are listed again"},
 		{name: "version", Run: printVersion, description: "print version of script"},
 	}
 )
@@ -65,6 +66,7 @@ var (
 	BookListPresenter service.BookListPresenter
 	BookDownloader    usecase.BookDownloader
 	BookSelector      service.BookSelector
+	DeviceRefresher   usecase.DeviceRefresher
 )
 
 func listBooks() error {
@@ -103,6 +105,15 @@ func downloadBooks() error {
 		bookIds[i] = v
 	}
 	return BookDownloader.DownloadBooks(bookIds)
+}
+
+func refreshDevice() error {
+	kindleId, err := DeviceRefresher.RefreshDevice()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Kindle (id %d) registered again, books hidden by Legimi after download should be listed again.\n", kindleId)
+	return nil
 }
 
 func printVersion() error {

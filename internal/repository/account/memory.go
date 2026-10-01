@@ -1,8 +1,17 @@
 package account
 
 type MemoryAccountRepository struct {
-	Login, Password string
-	KindleId        uint64
+	Login, Password    string
+	KindleId           uint64
+	KindleSerialNumber string
+}
+
+func (mar MemoryAccountRepository) GetKindleSerialNumber() string {
+	return mar.KindleSerialNumber
+}
+
+func (mar *MemoryAccountRepository) SaveKindleSerialNumber(serialNumber string) {
+	mar.KindleSerialNumber = serialNumber
 }
 
 func (mar MemoryAccountRepository) GetLogin() string {

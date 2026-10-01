@@ -77,6 +77,19 @@ func (far fileAccountRepository) GetKindleId() uint64 {
 	return key.MustUint64(0)
 }
 
+func (far fileAccountRepository) GetKindleSerialNumber() string {
+	key, err := far.config.GetKey("kindleSerialNumber")
+	if err != nil {
+		return ""
+	}
+	return key.MustString("")
+}
+
+func (far fileAccountRepository) SaveKindleSerialNumber(serialNumber string) {
+	far.config.Key("kindleSerialNumber").SetValue(serialNumber)
+	far.save()
+}
+
 func (far fileAccountRepository) SaveLogin(login string) {
 	key := far.config.Key("login")
 	key.SetValue(login)

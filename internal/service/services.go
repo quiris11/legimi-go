@@ -14,6 +14,7 @@ type Account interface {
 	// SaveCredentials stores credentials entered by user, should be called after successful login
 	SaveCredentials()
 	GetKindleId() (uint64, error)
+	usecase.DeviceRefresher
 }
 
 type Book interface {

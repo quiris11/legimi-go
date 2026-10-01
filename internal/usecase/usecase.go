@@ -6,6 +6,10 @@ type BookLister interface {
 	ListBooks() ([]model.BookMetadata, model.DownloadLimit, error)
 }
 
+type DeviceRefresher interface {
+	RefreshDevice() (uint64, error)
+}
+
 type BookDownloader interface {
 	DownloadBooks([]uint64) error
 }

@@ -97,6 +97,13 @@ Available commands are:
     move with arrow keys (also Page Up/Down, Home, End), select books with Space, press Enter to download selected books
     (or the book under cursor if none is selected) and confirm with `y`. Press Esc to quit without downloading.
 
+-   `refresh`
+
+    Register Kindle again (using Kindle Serial Number stored in configuration file, asked for if missing).
+    Legimi hides book from the list for a device once its download is requested; registering device again resets this,
+    so all books on your shelf are listed again. Kindle id stays the same for the same serial number.
+    `list` command tells when there are books hidden by Legimi.
+
 -   `version`
 
     Print legimi-go version.

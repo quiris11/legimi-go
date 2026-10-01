@@ -32,6 +32,15 @@ func presentBookList(w io.Writer, bookList []model.BookMetadata, downloadLimit m
 	}
 	presentSection(w, "Downloaded", downloaded)
 	presentSection(w, "Not downloaded", notDownloaded)
+	hidden := 0
+	for _, book := range bookList {
+		if book.Hidden {
+			hidden++
+		}
+	}
+	if hidden > 0 {
+		fmt.Fprintf(w, "%d book(s) hidden by Legimi after download request, use refresh command to list them again.\n", hidden)
+	}
 	if downloadLimit.IsKnown() {
 		fmt.Fprintf(w, "Downloads left: %d of %d\n", downloadLimit.Left, downloadLimit.Max)
 	} else {
