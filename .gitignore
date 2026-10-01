@@ -5,3 +5,4 @@ init_.go
 
 # downloaded books
 *.mobi
+*.mobi.part
