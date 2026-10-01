@@ -2,12 +2,17 @@ package protocol
 
 import "fmt"
 
-const BookDownloadDetailsPreparingError = 295
+const (
+	BookDownloadDetailsPreparingError = 295
+	// returned for book version higher than current one
+	BookVersionNotAvailableError = 135
+)
 
 // TODO list known errors and their descriptions
 var errorResponses = map[uint16]string{
 	133: "invalid credentials",
 	163: "invalid kindle id",
+	135: "book version not available",
 }
 
 type ErrorResponse struct {

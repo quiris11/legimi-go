@@ -96,16 +96,44 @@ func (bs defaultBookService) getBookMetadata(sessionId string, bookId uint64) (m
 	}
 	if len(bookList) == 0 {
 		// Legimi removes book from shelf listing once its download is requested
-		if book, ok := bs.bookRepository.Get(bookId); ok {
-			return book, nil
+		book, ok := bs.bookRepository.Get(bookId)
+		if !ok {
+			book = model.BookMetadata{Id: bookId, Title: "(title unknown)"}
 		}
-		// version not lower than current one is accepted and current book file is sent
-		return model.BookMetadata{Id: bookId, Version: 1, Title: "(title unknown)"}, nil
+		if book.Version == 0 {
+			book.Version, err = bs.findCurrentVersion(sessionId, bookId)
+		}
+		return book, err
 	}
 	if len(bookList) != 1 {
 		return model.BookMetadata{}, fmt.Errorf("unexpected book metadata list count: %d, expected 1", len(bookList))
 	}
 	return bookList[0], nil
+}
+
+const maxBookVersion = 50
+
+// findCurrentVersion asks for consecutive versions of the book until Legimi reports that version doesn't exist.
+// Older version may not be available anymore (it is being prepared forever), so the current one has to be used.
+func (bs defaultBookService) findCurrentVersion(sessionId string, bookId uint64) (uint64, error) {
+	var current uint64
+	for version := uint64(1); version <= maxBookVersion; version++ {
+		var details model.BookDownloadDetails
+		err := bs.client.Exchange(model.NewBookDownloadDetailsRequest(sessionId, bookId, version), &details)
+		if err, ok := err.(protocol.ErrorResponse); ok && err.Type == protocol.BookVersionNotAvailableError {
+			break
+		}
+		if err != nil {
+			if err, ok := err.(protocol.ErrorResponse); !ok || err.Type != protocol.BookDownloadDetailsPreparingError {
+				return 0, err
+			}
+		}
+		current = version
+	}
+	if current == 0 {
+		return 0, fmt.Errorf("book %d is not available for download", bookId)
+	}
+	return current, nil
 }
 
 // preparing book file by Legimi may take a while, wait with increasing delays

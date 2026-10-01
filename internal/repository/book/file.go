@@ -86,6 +86,10 @@ func (r fileBookRepository) DownloadRequested(book model.BookMetadata) error {
 	if !known {
 		cached = cachedBook{Version: book.Version, Title: book.Title, Author: book.Author, Downloaded: book.Downloaded}
 	}
+	if book.Version != 0 {
+		// e.g. current version found for book hidden by Legimi
+		cached.Version = book.Version
+	}
 	now := time.Now()
 	cached.DownloadRequested = &now
 	saved[book.Id] = cached

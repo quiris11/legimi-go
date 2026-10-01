@@ -76,3 +76,12 @@ func TestDownloadedBooksHiddenByLegimiAreAddedToList(t *testing.T) {
 		t.Error("book removed from shelf without download request should not be listed")
 	}
 }
+
+func TestDownloadRequestUpdatesVersion(t *testing.T) {
+	repository := GetFileRepository(configFile(filepath.Join(t.TempDir(), "config.ini")))
+	repository.Save([]model.BookMetadata{{Id: 1, Title: "Unknown version"}})
+	repository.DownloadRequested(model.BookMetadata{Id: 1, Version: 2, Title: "Unknown version"})
+	if book, _ := repository.Get(1); book.Version != 2 {
+		t.Errorf("version %d, expected 2", book.Version)
+	}
+}
