@@ -1,1 +1,7 @@
 init_.go
+
+# built binary
+/legimi-go
+
+# downloaded books
+*.mobi
