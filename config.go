@@ -17,7 +17,12 @@ func configure() {
 	accountService := as.DefaultService(accountRepository, apiClient, commands.Options)
 	sessionService := session.DefaultService(accountService, apiClient)
 	bookDownloadPresenter := presenter.DefaultBookDownloadPresenter()
-	bookService := book.DefaultService(sessionService, apiClient, bookDownloadPresenter, br.GetFileRepository(commands.Options))
+	// command line option takes precedence over configuration file
+	downloadDirectory := commands.Options.GetDownloadDirectory()
+	if downloadDirectory == "" {
+		downloadDirectory = accountRepository.GetDownloadDirectory()
+	}
+	bookService := book.DefaultService(sessionService, apiClient, bookDownloadPresenter, br.GetFileRepository(commands.Options), downloadDirectory)
 	commands.BookLister = bookService
 	commands.BookDownloader = bookService
 	commands.BookListPresenter = presenter.DefaultBookListPresenter()

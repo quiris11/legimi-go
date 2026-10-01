@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/tp86/legimi-go/internal/model"
@@ -18,12 +20,39 @@ const (
 
 var chunkRetryDelay = 2 * time.Second
 
+// expandHome replaces leading ~ with home directory, as it's not done by shell e.g. in configuration file
+func expandHome(path string) string {
+	if path != "~" && !strings.HasPrefix(path, "~/") {
+		return path
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return path
+	}
+	return filepath.Join(home, strings.TrimPrefix(path, "~"))
+}
+
+// checkDirectory makes sure books can be downloaded to directory, e.g. that Kindle is mounted
+func checkDirectory(directory string) error {
+	if directory == "" {
+		return nil
+	}
+	info, err := os.Stat(directory)
+	if err != nil {
+		return fmt.Errorf("download directory %s doesn't exist (is device connected?)", directory)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("download directory %s is not a directory", directory)
+	}
+	return nil
+}
+
 func (bs defaultBookService) download(book model.BookMetadata, downloadDetails model.BookDownloadDetails) error {
 	if downloadDetails.Size == 0 {
 		return fmt.Errorf("book %d: download size not received", book.Id)
 	}
 	bs.downloadPresenter.Start(book)
-	fileName := fmt.Sprintf("%d.mobi", book.Id)
+	fileName := filepath.Join(bs.downloadDirectory, fmt.Sprintf("%d.mobi", book.Id))
 	// download to temporary file first, so that book file (possibly existing one)
 	// is replaced only with complete and verified download
 	partFileName := fileName + ".part"

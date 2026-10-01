@@ -18,6 +18,8 @@ type defaultBookService struct {
 	client            api.Client
 	downloadPresenter service.DownloadPresenter
 	bookRepository    repository.Book
+	// empty for current directory
+	downloadDirectory string
 }
 
 func (bs defaultBookService) ListBooks() ([]model.BookMetadata, model.DownloadLimit, error) {
@@ -49,8 +51,15 @@ func (bs defaultBookService) ListBooks() ([]model.BookMetadata, model.DownloadLi
 	return bs.bookRepository.Complete(list), limit, nil
 }
 
+func (bs defaultBookService) CheckDownloadDirectory() error {
+	return checkDirectory(bs.downloadDirectory)
+}
+
 func (bs defaultBookService) DownloadBooks(bookIds []uint64) error {
 	// TODO concurrent download of all books
+	if err := bs.CheckDownloadDirectory(); err != nil {
+		return err
+	}
 	errs := make([]error, 0)
 	for _, id := range bookIds {
 		errs = append(errs, bs.downloadBook(id))

@@ -11,8 +11,10 @@ func DefaultService(
 	apiClient api.Client,
 	bookDownloadPresenter service.DownloadPresenter,
 	bookRepository repository.Book,
+	downloadDirectory string,
 ) service.Book {
 	return defaultBookService{
+		downloadDirectory: expandHome(downloadDirectory),
 		bookRepository:    bookRepository,
 		sessionService:    sessionService,
 		client:            apiClient,

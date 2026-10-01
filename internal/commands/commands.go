@@ -79,6 +79,10 @@ func listBooks() error {
 }
 
 func selectBooks() error {
+	// fail before user selects books
+	if err := BookDownloader.CheckDownloadDirectory(); err != nil {
+		return err
+	}
 	bookList, downloadLimit, err := BookLister.ListBooks()
 	if err != nil {
 		return err

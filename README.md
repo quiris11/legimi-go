@@ -42,12 +42,15 @@ Polecenie jest obowiązkowe, nie ma polecenia domyślnego.
 
 ### Typowe użycie
 
-1.  Podłącz Kindle i przejdź do jego katalogu `documents`, żeby książki trafiały od razu na czytnik
-    (na Fedorze zwykle jest zamontowany w `/run/media/$USER/Kindle`):
+1.  Podłącz Kindle. Żeby książki trafiały od razu na czytnik, ustaw jego katalog `documents` jako folder docelowy
+    (na Fedorze Kindle jest zwykle zamontowany w `/run/media/$USER/Kindle`), raz na zawsze w pliku konfiguracji:
 
-    ```shell
-    $ cd /run/media/$USER/Kindle/documents
+    ```ini
+    downloadDir = /run/media/<użytkownik>/Kindle/documents
     ```
+
+    albo jednorazowo opcją `--dir`, albo przechodząc do tego katalogu (`cd`) przed pobieraniem,
+    zobacz [Folder docelowy](#folder-docelowy).
 
 2.  Wyświetl książki z półki:
 
@@ -69,7 +72,7 @@ Polecenie jest obowiązkowe, nie ma polecenia domyślnego.
     $ legimi-go download <id> [<id> ...]
     ```
 
-    Każda książka zapisuje się jako `<id>.mobi` w bieżącym katalogu.
+    Każda książka zapisuje się jako `<id>.mobi` w folderze docelowym.
 
 4.  Bezpiecznie odłącz Kindle. Pobrane książki pojawią się w jego bibliotece.
 
@@ -138,7 +141,9 @@ Zaznaczenia nie znikają przy zmianie filtra. Po potwierdzeniu książki są pob
 
 ### `download <id> ...`
 
-Pobiera książki o podanych numerach id do bieżącego katalogu, po kolei. Dla każdej książki:
+Pobiera książki o podanych numerach id do [folderu docelowego](#folder-docelowy), po kolei.
+Jeśli folder nie istnieje (np. Kindle nie jest podłączony), program kończy się błędem, zanim cokolwiek pobierze
+(przy `select` jeszcze przed wyświetleniem listy). Dla każdej książki:
 
 1.  Dane książki są pobierane z listy półki w Legimi. Jeśli Legimi już jej nie pokazuje
     (zobacz [Książki ukryte przez Legimi](#książki-ukryte-przez-legimi)), tytuł i autor są brane z [pliku książek](#pliki),
@@ -191,6 +196,10 @@ Wszystkie opcje są nieobowiązkowe i można je podawać z jednym (`-config`) al
     Argumenty wiersza poleceń są widoczne dla innych użytkowników komputera (np. w `ps`) i trafiają do historii powłoki,
     więc bezpieczniej jest wpisać hasło, gdy program o nie zapyta.
 
+-   `--dir ścieżka`
+
+    Folder docelowy pobieranych książek, ważniejszy niż `downloadDir` z pliku konfiguracji, zobacz [Folder docelowy](#folder-docelowy).
+
 -   `--debug`
 
     Wypisuje na stderr wybrane informacje o zapytaniach i odpowiedziach:
@@ -201,16 +210,32 @@ Wszystkie opcje są nieobowiązkowe i można je podawać z jednym (`-config`) al
 
 | Plik | Zawartość |
 |---|---|
-| `~/.config/legimi-go/config.ini` (albo ścieżka z `--config`) | `login`, `password` (otwartym tekstem), `kindleId`, `kindleSerialNumber` |
+| `~/.config/legimi-go/config.ini` (albo ścieżka z `--config`) | `login`, `password` (otwartym tekstem), `kindleId`, `kindleSerialNumber`; opcjonalnie `downloadDir` wpisany ręcznie |
 | `config-books.json` obok pliku konfiguracji (nazwa tworzona od nazwy pliku konfiguracji, np. `praca.ini` → `praca-books.json`) | dane książek widzianych na półce (wersja, tytuł, autor, status pobrania) oraz daty próśb o pobranie i pobrań tym programem |
-| `<id>.mobi` w bieżącym katalogu | pobrana książka |
-| `<id>.mobi.part` w bieżącym katalogu | książka w trakcie pobierania, usuwana przy błędzie (zostaje tylko po zabiciu programu) |
+| `<id>.mobi` w folderze docelowym | pobrana książka |
+| `<id>.mobi.part` w folderze docelowym | książka w trakcie pobierania, usuwana przy błędzie (zostaje tylko po zabiciu programu) |
 
 Katalog konfiguracji jest tworzony z uprawnieniami `700`, a pliki konfiguracji i książek z `600`
 (dostęp tylko dla właściciela). Przy starcie program poprawia uprawnienia pliku konfiguracji utworzonego przez starsze wersje.
 
 Hasło, którego format INI nie potrafi odczytać bez zmian (np. otoczone cudzysłowami), nie jest zapisywane.
 Program wyświetla ostrzeżenie, a hasło trzeba wpisywać przy każdym uruchomieniu albo podać opcją `--password`.
+
+## Folder docelowy
+
+Pobrane książki trafiają do pierwszego ustawionego z:
+
+1.  opcji `--dir` (np. `legimi-go --dir ~/Książki download 123`),
+2.  ustawienia `downloadDir` w pliku konfiguracji, które trzeba wpisać ręcznie, np.:
+
+    ```ini
+    downloadDir = ~/Dropbox/Legimi
+    ```
+
+3.  bieżącego katalogu.
+
+Znak `~` na początku ścieżki oznacza katalog domowy (także w pliku konfiguracji). Folder musi już istnieć,
+program go nie tworzy - dzięki temu niepodłączony Kindle daje błąd zamiast pobierania na dysk komputera.
 
 ## Książki ukryte przez Legimi
 

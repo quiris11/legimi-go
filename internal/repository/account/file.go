@@ -85,6 +85,15 @@ func (far fileAccountRepository) GetKindleSerialNumber() string {
 	return key.MustString("")
 }
 
+// GetDownloadDirectory returns downloadDir set by user in configuration file
+func (far fileAccountRepository) GetDownloadDirectory() string {
+	key, err := far.config.GetKey("downloadDir")
+	if err != nil {
+		return ""
+	}
+	return key.MustString("")
+}
+
 func (far fileAccountRepository) SaveKindleSerialNumber(serialNumber string) {
 	far.config.Key("kindleSerialNumber").SetValue(serialNumber)
 	far.save()

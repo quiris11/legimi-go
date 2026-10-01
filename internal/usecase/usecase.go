@@ -12,4 +12,6 @@ type DeviceRefresher interface {
 
 type BookDownloader interface {
 	DownloadBooks([]uint64) error
+	// CheckDownloadDirectory makes sure books can be downloaded, e.g. that Kindle is mounted
+	CheckDownloadDirectory() error
 }

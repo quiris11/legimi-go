@@ -4,6 +4,11 @@ type MemoryAccountRepository struct {
 	Login, Password    string
 	KindleId           uint64
 	KindleSerialNumber string
+	DownloadDirectory  string
+}
+
+func (mar MemoryAccountRepository) GetDownloadDirectory() string {
+	return mar.DownloadDirectory
 }
 
 func (mar MemoryAccountRepository) GetKindleSerialNumber() string {

@@ -17,6 +17,7 @@ type Account interface {
 	GetPassword() string
 	GetKindleId() uint64
 	GetKindleSerialNumber() string
+	GetDownloadDirectory() string
 	SaveLogin(login string)
 	SavePassword(password string) error
 	SaveKindleId(kindleId uint64)

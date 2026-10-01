@@ -259,3 +259,51 @@ func TestSuccessfulDownloadReplacesBookFile(t *testing.T) {
 		t.Errorf("temporary file left: %v", entries)
 	}
 }
+
+func TestDownloadToDirectory(t *testing.T) {
+	directory := t.TempDir()
+	book := makeMobi(30, 10000)
+	srv := server(t, book, nil)
+	defer srv.Close()
+	bs := defaultBookService{downloadPresenter: &stubPresenter{}, downloadDirectory: directory}
+	if err := bs.download(model.BookMetadata{Id: 123}, model.BookDownloadDetails{Url: srv.URL, Size: uint64(len(book))}); err != nil {
+		t.Fatal(err)
+	}
+	if data, _ := os.ReadFile(filepath.Join(directory, "123.mobi")); !bytes.Equal(data, book) {
+		t.Error("book not downloaded to directory")
+	}
+	if entries, _ := os.ReadDir(directory); len(entries) != 1 {
+		t.Errorf("unexpected files: %v", entries)
+	}
+}
+
+func TestDownloadDirectoryMustExist(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "file")
+	os.WriteFile(file, nil, 0644)
+	for _, directory := range []string{filepath.Join(t.TempDir(), "missing"), file} {
+		bs := defaultBookService{downloadDirectory: directory}
+		if err := bs.DownloadBooks([]uint64{1}); err == nil || !strings.Contains(err.Error(), directory) {
+			t.Errorf("%s: error %v", directory, err)
+		}
+	}
+	if err := checkDirectory(""); err != nil {
+		t.Errorf("current directory: %v", err)
+	}
+}
+
+func TestExpandHome(t *testing.T) {
+	home, _ := os.UserHomeDir()
+	tests := map[string]string{
+		"~":                  home,
+		"~/Kindle/documents": filepath.Join(home, "Kindle/documents"),
+		"/media/Kindle":      "/media/Kindle",
+		"books":              "books",
+		"~user/books":        "~user/books",
+		"":                   "",
+	}
+	for path, expected := range tests {
+		if got := expandHome(path); got != expected {
+			t.Errorf("%q: got %q, expected %q", path, got, expected)
+		}
+	}
+}

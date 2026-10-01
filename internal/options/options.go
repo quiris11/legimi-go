@@ -9,6 +9,10 @@ type Configuration interface {
 	GetFile() string
 }
 
+type Download interface {
+	GetDownloadDirectory() string
+}
+
 type Debugging interface {
 	IsDebug() bool
 }

@@ -16,6 +16,7 @@ type options struct {
 	password          string
 	configurationFile string
 	debugging         bool
+	downloadDirectory string
 }
 
 var Options options
@@ -32,6 +33,10 @@ func (o options) GetFile() string {
 	return o.configurationFile
 }
 
+func (o options) GetDownloadDirectory() string {
+	return o.downloadDirectory
+}
+
 func (o options) IsDebug() bool {
 	return o.debugging
 }
@@ -42,6 +47,7 @@ func configureFlags() {
 	flag.StringVar(&Options.login, "login", "", "Legimi login")
 	flag.StringVar(&Options.password, "password", "", "Legimi password")
 	flag.BoolVar(&Options.debugging, "debug", false, "print debugging information")
+	flag.StringVar(&Options.downloadDirectory, "dir", "", "directory for downloaded books (default: downloadDir from configuration file or current directory)")
 }
 
 func flagPrint(what string) {
