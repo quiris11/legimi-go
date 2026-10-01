@@ -46,7 +46,7 @@ func (bs defaultBookService) ListBooks() ([]model.BookMetadata, model.DownloadLi
 	if err := bs.bookRepository.Save(list); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: couldn't remember books metadata: %v\n", err)
 	}
-	return list, limit, nil
+	return bs.bookRepository.Complete(list), limit, nil
 }
 
 func (bs defaultBookService) DownloadBooks(bookIds []uint64) error {
@@ -69,11 +69,21 @@ func (bs defaultBookService) downloadBook(id uint64) error {
 	if err != nil {
 		return err
 	}
+	// Legimi hides book from shelf listing from now on, remember it
+	if err := bs.bookRepository.DownloadRequested(book); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: couldn't remember download of book %d: %v\n", id, err)
+	}
 	bookDownloadDetails, err := bs.getBookDownloadDetails(sessionId, book)
 	if err != nil {
 		return err
 	}
-	return bs.download(book, bookDownloadDetails)
+	if err := bs.download(book, bookDownloadDetails); err != nil {
+		return err
+	}
+	if err := bs.bookRepository.Downloaded(id); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: couldn't remember download of book %d: %v\n", id, err)
+	}
+	return nil
 }
 
 func (bs defaultBookService) getBookMetadata(sessionId string, bookId uint64) (model.BookMetadata, error) {

@@ -78,14 +78,16 @@ Available commands are:
 -   `list`
 
     List books currently on your Legimi shelf.
+    Books downloaded with legimi-go are marked with date of last download.
     Number of downloads left in subscription period is shown below the list.
 
 -   `download <id> ...`
 
     Download book(s) given their id(s). Book id can be obtained by listing books (first value in book entry line).
     Note that Legimi removes book from the list (but not from your shelf on Legimi website) once its download is requested,
-    even if download fails. Metadata of listed books is remembered in `config-books.json` file next to configuration file,
-    so book can be downloaded again by its id.
+    even if download fails. Metadata of listed books and downloads made with legimi-go are remembered in `config-books.json`
+    file next to configuration file, so such book is still shown by `list` and `select` commands (marked as hidden by Legimi)
+    and can be downloaded again.
     Book file is downloaded to `<id>.mobi.part` and renamed to `<id>.mobi` only when it's complete and verified.
 
 -   `select`

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/tp86/legimi-go/internal/api/protocol/encoding"
 )
@@ -144,6 +145,9 @@ type BookMetadata struct {
 	Version    uint64
 	Downloaded bool
 	NextPage   string
+	// information recorded locally, not sent by Legimi
+	LastDownloaded time.Time // last successful download with this program
+	Hidden         bool      // hidden from shelf listing by Legimi after download was requested
 }
 
 func (bl BookList) Type() uint16 {

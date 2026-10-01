@@ -46,9 +46,21 @@ func presentSection(w io.Writer, header string, books []model.BookMetadata) {
 	sortByAuthorAndTitle(books)
 	fmt.Fprintf(w, "%s (%d):\n", header, len(books))
 	for _, book := range books {
-		fmt.Fprintf(w, "%8d: %s - \"%s\"\n", book.Id, book.Author, book.Title)
+		fmt.Fprintf(w, "%8d: %s - \"%s\"%s\n", book.Id, book.Author, book.Title, bookNotes(book))
 	}
 	fmt.Fprintln(w)
+}
+
+// bookNotes describes downloads made with this program
+func bookNotes(book model.BookMetadata) string {
+	var notes string
+	if !book.LastDownloaded.IsZero() {
+		notes += " [downloaded with legimi-go " + book.LastDownloaded.Local().Format("2006-01-02 15:04") + "]"
+	}
+	if book.Hidden {
+		notes += " [hidden by Legimi after download request]"
+	}
+	return notes
 }
 
 func sortByAuthorAndTitle(books []model.BookMetadata) {

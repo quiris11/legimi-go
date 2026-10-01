@@ -292,9 +292,10 @@ func (s *selector) render(width, height int) []string {
 			mark = "[x]"
 		}
 		text := fmt.Sprintf("  %s %s - \"%s\"", mark, book.Author, book.Title)
-		if book.Downloaded {
+		if book.Downloaded && book.LastDownloaded.IsZero() {
 			text += " (downloaded)"
 		}
+		text += bookNotes(book)
 		text = fit(text, width)
 		switch {
 		case i == s.cursor:
