@@ -22,4 +22,6 @@ type Account interface {
 	SavePassword(password string) error
 	SaveKindleId(kindleId uint64)
 	SaveKindleSerialNumber(serialNumber string)
+	// SaveDownloadDirectory stores directory for downloaded books, empty removes the setting
+	SaveDownloadDirectory(directory string)
 }

@@ -94,6 +94,15 @@ func (far fileAccountRepository) GetDownloadDirectory() string {
 	return key.MustString("")
 }
 
+func (far fileAccountRepository) SaveDownloadDirectory(directory string) {
+	if directory == "" {
+		far.config.DeleteKey("downloadDir")
+	} else {
+		far.config.Key("downloadDir").SetValue(directory)
+	}
+	far.save()
+}
+
 func (far fileAccountRepository) SaveKindleSerialNumber(serialNumber string) {
 	far.config.Key("kindleSerialNumber").SetValue(serialNumber)
 	far.save()

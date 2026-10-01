@@ -43,14 +43,13 @@ Polecenie jest obowiązkowe, nie ma polecenia domyślnego.
 ### Typowe użycie
 
 1.  Podłącz Kindle. Żeby książki trafiały od razu na czytnik, ustaw jego katalog `documents` jako folder docelowy
-    (na Fedorze Kindle jest zwykle zamontowany w `/run/media/$USER/Kindle`), raz na zawsze w pliku konfiguracji:
+    (na Fedorze Kindle jest zwykle zamontowany w `/run/media/$USER/Kindle`). Wystarczy zrobić to raz:
 
-    ```ini
-    downloadDir = /run/media/<użytkownik>/Kindle/documents
+    ```shell
+    $ legimi-go dir /run/media/$USER/Kindle/documents
     ```
 
-    albo jednorazowo opcją `--dir`, albo przechodząc do tego katalogu (`cd`) przed pobieraniem,
-    zobacz [Folder docelowy](#folder-docelowy).
+    Zobacz [Folder docelowy](#folder-docelowy).
 
 2.  Wyświetl książki z półki:
 
@@ -168,6 +167,18 @@ Prośba o pobranie i udane pobranie są zapisywane w [pliku książek](#pliki).
 Legimi wlicza do limitu abonamentu pobrania książek wcześniej niepobranych;
 w praktyce ponowne pobranie już pobranej książki nie zmniejszało limitu.
 
+### `dir [folder]`
+
+Pokazuje albo ustawia [folder docelowy](#folder-docelowy) pobieranych książek. Nie łączy się z Legimi.
+
+-   `legimi-go dir` pokazuje aktualne ustawienie (i folder z opcji `--dir`, jeśli ją podano).
+-   `legimi-go dir <folder>` zapisuje folder w pliku konfiguracji jako `downloadDir`. Ścieżka jest zapisywana jako bezwzględna
+    (`~` oznacza katalog domowy, ścieżka względna jest liczona od bieżącego katalogu).
+    Gdy folder w tej chwili nie istnieje (np. Kindle nie jest podłączony), ustawienie i tak jest zapisywane, z ostrzeżeniem.
+-   `legimi-go dir .` usuwa ustawienie, czyli książki znowu trafiają do bieżącego katalogu.
+
+Ścieżkę ze spacjami trzeba ująć w cudzysłów.
+
 ### `refresh`
 
 Ponownie rejestruje Kindle, używając numeru seryjnego zapisanego w pliku konfiguracji (jeśli go brakuje, program o niego zapyta).
@@ -210,7 +221,7 @@ Wszystkie opcje są nieobowiązkowe i można je podawać z jednym (`-config`) al
 
 | Plik | Zawartość |
 |---|---|
-| `~/.config/legimi-go/config.ini` (albo ścieżka z `--config`) | `login`, `password` (otwartym tekstem), `kindleId`, `kindleSerialNumber`; opcjonalnie `downloadDir` wpisany ręcznie |
+| `~/.config/legimi-go/config.ini` (albo ścieżka z `--config`) | `login`, `password` (otwartym tekstem), `kindleId`, `kindleSerialNumber`; `downloadDir` (ustawiany poleceniem `dir`) |
 | `config-books.json` obok pliku konfiguracji (nazwa tworzona od nazwy pliku konfiguracji, np. `praca.ini` → `praca-books.json`) | dane książek widzianych na półce (wersja, tytuł, autor, status pobrania) oraz daty próśb o pobranie i pobrań tym programem |
 | `<id>.mobi` w folderze docelowym | pobrana książka |
 | `<id>.mobi.part` w folderze docelowym | książka w trakcie pobierania, usuwana przy błędzie (zostaje tylko po zabiciu programu) |
@@ -226,11 +237,13 @@ Program wyświetla ostrzeżenie, a hasło trzeba wpisywać przy każdym uruchomi
 Pobrane książki trafiają do pierwszego ustawionego z:
 
 1.  opcji `--dir` (np. `legimi-go --dir ~/Książki download 123`),
-2.  ustawienia `downloadDir` w pliku konfiguracji, które trzeba wpisać ręcznie, np.:
+2.  ustawienia `downloadDir` w pliku konfiguracji, zapisywanego poleceniem [`dir`](#dir-folder), np.:
 
-    ```ini
-    downloadDir = ~/Dropbox/Legimi
+    ```shell
+    $ legimi-go dir ~/Dropbox/Legimi
     ```
+
+    (można je też wpisać ręcznie do pliku konfiguracji jako `downloadDir = ścieżka`),
 
 3.  bieżącego katalogu.
 

@@ -3,10 +3,13 @@ package commands
 import (
 	"flag"
 	"fmt"
+	"os"
+	"path/filepath"
 	"runtime/debug"
 	"strconv"
 	"strings"
 
+	"github.com/tp86/legimi-go/internal/paths"
 	"github.com/tp86/legimi-go/internal/service"
 	"github.com/tp86/legimi-go/internal/usecase"
 )
@@ -29,6 +32,7 @@ var (
 		{name: "list", Run: listBooks, description: "list books on shelf"},
 		{name: "download", args: "id ...", Run: downloadBooks, description: "download book(s) with given id(s)"},
 		{name: "select", Run: selectBooks, description: "select book(s) to download from interactive list"},
+		{name: "dir", args: "[directory]", Run: downloadDirectory, description: "show or set directory for downloaded books (\".\" for current directory)"},
 		{name: "refresh", Run: refreshDevice, description: "register Kindle again, so that books hidden by Legimi after download are listed again"},
 		{name: "version", Run: printVersion, description: "print version of script"},
 	}
@@ -67,7 +71,13 @@ var (
 	BookDownloader    usecase.BookDownloader
 	BookSelector      service.BookSelector
 	DeviceRefresher   usecase.DeviceRefresher
+	DownloadDirectory DownloadDirectorySetting
 )
+
+type DownloadDirectorySetting interface {
+	GetDownloadDirectory() string
+	SaveDownloadDirectory(directory string)
+}
 
 func listBooks() error {
 	bookList, downloadLimit, err := BookLister.ListBooks()
@@ -109,6 +119,38 @@ func downloadBooks() error {
 		bookIds[i] = v
 	}
 	return BookDownloader.DownloadBooks(bookIds)
+}
+
+func downloadDirectory() error {
+	args := flag.Args()[1:]
+	switch {
+	case len(args) == 0:
+		if directory := DownloadDirectory.GetDownloadDirectory(); directory != "" {
+			fmt.Printf("Books are downloaded to: %s\n", directory)
+		} else {
+			fmt.Println("Books are downloaded to current directory.")
+		}
+		if Options.GetDownloadDirectory() != "" {
+			fmt.Printf("For this run --dir option sets: %s\n", Options.GetDownloadDirectory())
+		}
+		return nil
+	case len(args) > 1:
+		return fmt.Errorf("expected one directory, use quotes for path with spaces")
+	case args[0] == ".":
+		DownloadDirectory.SaveDownloadDirectory("")
+		fmt.Println("Books will be downloaded to current directory.")
+		return nil
+	}
+	directory, err := filepath.Abs(paths.ExpandHome(args[0]))
+	if err != nil {
+		return err
+	}
+	DownloadDirectory.SaveDownloadDirectory(directory)
+	fmt.Printf("Books will be downloaded to: %s\n", directory)
+	if info, err := os.Stat(directory); err != nil || !info.IsDir() {
+		fmt.Println("Warning: this directory doesn't exist now, downloads will fail until it does (e.g. until Kindle is connected).")
+	}
+	return nil
 }
 
 func refreshDevice() error {

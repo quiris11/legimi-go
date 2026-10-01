@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/tp86/legimi-go/internal/model"
@@ -19,18 +18,6 @@ const (
 )
 
 var chunkRetryDelay = 2 * time.Second
-
-// expandHome replaces leading ~ with home directory, as it's not done by shell e.g. in configuration file
-func expandHome(path string) string {
-	if path != "~" && !strings.HasPrefix(path, "~/") {
-		return path
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return path
-	}
-	return filepath.Join(home, strings.TrimPrefix(path, "~"))
-}
 
 // checkDirectory makes sure books can be downloaded to directory, e.g. that Kindle is mounted
 func checkDirectory(directory string) error {

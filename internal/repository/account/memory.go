@@ -11,6 +11,10 @@ func (mar MemoryAccountRepository) GetDownloadDirectory() string {
 	return mar.DownloadDirectory
 }
 
+func (mar *MemoryAccountRepository) SaveDownloadDirectory(directory string) {
+	mar.DownloadDirectory = directory
+}
+
 func (mar MemoryAccountRepository) GetKindleSerialNumber() string {
 	return mar.KindleSerialNumber
 }

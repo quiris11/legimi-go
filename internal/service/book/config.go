@@ -2,6 +2,7 @@ package book
 
 import (
 	"github.com/tp86/legimi-go/internal/api"
+	"github.com/tp86/legimi-go/internal/paths"
 	"github.com/tp86/legimi-go/internal/repository"
 	"github.com/tp86/legimi-go/internal/service"
 )
@@ -14,7 +15,7 @@ func DefaultService(
 	downloadDirectory string,
 ) service.Book {
 	return defaultBookService{
-		downloadDirectory: expandHome(downloadDirectory),
+		downloadDirectory: paths.ExpandHome(downloadDirectory),
 		bookRepository:    bookRepository,
 		sessionService:    sessionService,
 		client:            apiClient,
