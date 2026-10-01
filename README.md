@@ -52,14 +52,15 @@ All command line switches are optional.
     Your Legimi login.
     If you don't provide login from command line, it will be read from configuration file.
     If it is missing in configuration file as well, you will be asked to provide it during command execution.
-    It will be then stored in configuration file, so you don't have to repeat it during future command runs.
+    It will be then stored in configuration file (after successful login), so you don't have to repeat it during future command runs.
     If you do provide login from command line, it will not be written to configuration file.
 
 -   `--password password`
 
     Your Legimi password.
     Same logic as for login applies.
-    Note that login and password are stored in configuration file as plain text.
+    Note that login and password are stored in configuration file as plain text (file is readable only by its owner).
+    Password that can't be stored in configuration file unchanged (e.g. surrounded by quotes) is not saved - provide it with this switch instead.
 
 -   `--debug`
 

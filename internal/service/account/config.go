@@ -8,5 +8,5 @@ import (
 )
 
 func DefaultService(r repository.Account, client api.Client, opts options.Credentials) service.Account {
-	return defaultAccountService{accountRepository: r, client: client, userCredentials: opts}
+	return &defaultAccountService{accountRepository: r, client: client, userCredentials: opts}
 }

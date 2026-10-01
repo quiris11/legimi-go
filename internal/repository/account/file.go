@@ -1,6 +1,7 @@
 package account
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path"
@@ -9,6 +10,9 @@ import (
 	"gopkg.in/ini.v1"
 )
 
+// trailing backslash in password must not be treated as line continuation
+var loadOptions = ini.LoadOptions{IgnoreContinuation: true}
+
 type fileAccountRepository struct {
 	filePath string
 	file     *ini.File
@@ -16,7 +20,7 @@ type fileAccountRepository struct {
 }
 
 func newFileAccountRepository(configFile string) repository.Account {
-	file, err := ini.Load(configFile)
+	file, err := ini.LoadSources(loadOptions, configFile)
 	if err != nil {
 		file = ini.Empty()
 		os.MkdirAll(path.Dir(configFile), 0700)
@@ -79,10 +83,29 @@ func (far fileAccountRepository) SaveLogin(login string) {
 	far.save()
 }
 
-func (far fileAccountRepository) SavePassword(password string) {
+func (far fileAccountRepository) SavePassword(password string) error {
+	if !storedUnchanged(password) {
+		return fmt.Errorf("it would not be read back unchanged from configuration file, use --password option instead")
+	}
 	key := far.config.Key("password")
 	key.SetValue(password)
-	far.save()
+	return far.save()
+}
+
+// storedUnchanged checks if value is read back from ini file exactly as written
+// (e.g. surrounding quotes are stripped when reading)
+func storedUnchanged(value string) bool {
+	file := ini.Empty()
+	file.Section("").Key("value").SetValue(value)
+	var buf bytes.Buffer
+	if _, err := file.WriteTo(&buf); err != nil {
+		return false
+	}
+	loaded, err := ini.LoadSources(loadOptions, buf.Bytes())
+	if err != nil {
+		return false
+	}
+	return loaded.Section("").Key("value").String() == value
 }
 
 func (far fileAccountRepository) SaveKindleId(kindleId uint64) {

@@ -11,6 +11,8 @@ type Session interface {
 
 type Account interface {
 	GetCredentials() (string, string)
+	// SaveCredentials stores credentials entered by user, should be called after successful login
+	SaveCredentials()
 	GetKindleId() (uint64, error)
 }
 

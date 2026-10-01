@@ -21,8 +21,9 @@ func (mar *MemoryAccountRepository) SaveLogin(login string) {
 	mar.Login = login
 }
 
-func (mar *MemoryAccountRepository) SavePassword(password string) {
+func (mar *MemoryAccountRepository) SavePassword(password string) error {
 	mar.Password = password
+	return nil
 }
 
 func (mar *MemoryAccountRepository) SaveKindleId(id uint64) {

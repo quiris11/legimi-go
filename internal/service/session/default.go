@@ -22,5 +22,6 @@ func (ss defaultSessionService) GetSession() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	ss.accountService.SaveCredentials()
 	return session.Id, nil
 }
