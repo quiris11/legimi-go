@@ -1,183 +1,262 @@
 # legimi-go
 
-Simple, alternative downloader of [Legimi](https://www.legimi.pl/) ebooks written in Go.
+Prosty, alternatywny program do pobierania książek z [Legimi](https://www.legimi.pl/) na czytnik Kindle, napisany w Go.
 
-Basically, a rewrite of [previous downloader in Lua](https://github.com/tp86/legimi/).
+Program jest całkowicie nieoficjalny i nie jest w żaden sposób powiązany z Legimi.
+Korzysta z binarnego protokołu oficjalnej aplikacji Legimi dla Windows (wersja 1.8.5),
+odtworzonego na podstawie ruchu sieciowego, dlatego obsługuje tylko część funkcji.
 
-It is completely unofficial, I am not affiliated with Legimi in any way.
+To repozytorium jest forkiem [tp86/legimi-go](https://github.com/tp86/legimi-go)
+(który z kolei zastąpił [wcześniejszą wersję w Lua](https://github.com/tp86/legimi/)).
+Zobacz [Historia](#historia).
 
-> [!NOTE]
-> This is still work in progress, however, it is already usable.
+## Instalacja
 
-You can find more information about how it came about in [Background](#background).
-
-## Installation
-
-Simply download archive from Releases section, unpack and make it executable (if needed): `$ chmod +x legimi-go`.
-You can add installation directory to your `PATH` variable to be able to run it from anywhere, of course.
-
-Alternatively, if you have Go installed, you can install it using `go install` command:
+Zbuduj program ze źródeł (wymagane Go 1.22 lub nowsze):
 
 ```shell
-$ go install github.com/tp86/legimi-go@<version>
+$ git clone https://github.com/quiris11/legimi-go.git
+$ cd legimi-go
+$ go build -o legimi-go .
 ```
 
-`<version>` can be specific version tag from releases or `latest` to get code from `main` branch.
-Note that `main` branch may contain unfinished features.
-I'm doing my best to commit only working code, though.
+Bez zainstalowanego Go można zbudować go w kontenerze, np. przez Podmana:
 
-## Usage
-
-To view usage, invoke:
 ```shell
+$ podman run --rm -v "$PWD":/src:Z -w /src -e CGO_ENABLED=0 docker.io/library/golang:1.22 go build -o legimi-go .
+```
+
+Skopiuj `legimi-go` do katalogu w `PATH` (np. `~/.local/bin`), żeby uruchamiać go z dowolnego miejsca.
+Po aktualizacji kodu zbuduj program ponownie (i skopiuj go jeszcze raz).
+
+Wydania (Releases) oraz `go install github.com/tp86/legimi-go@<wersja>` dają oryginalną wersję, bez zmian z tego forka.
+
+## Użycie
+
+```shell
+$ legimi-go [opcje] <polecenie> [argumenty]
 $ legimi-go --help
 ```
 
-### Options
+Polecenie jest obowiązkowe, nie ma polecenia domyślnego.
 
-All command line switches are optional.
+### Typowe użycie
 
--   `--config path`
+1.  Podłącz Kindle i przejdź do jego katalogu `documents`, żeby książki trafiały od razu na czytnik
+    (na Fedorze zwykle jest zamontowany w `/run/media/$USER/Kindle`):
 
-    Path to configuration file. Default value is `"$HOME/.config/legimi-go/config.ini"`.
-    Configuration file contains your credentials and Kindle Id as assigned by Legimi service.
-    It will be automatically created (with missing directories) on first command run, so generally you don't need to modify it by hand.
-    If you don't want to store your login and password in file, you can provide credentials in command line (see `--login` and `--password` switches).
+    ```shell
+    $ cd /run/media/$USER/Kindle/documents
+    ```
 
-> [!TIP]
-> You can create many configuration files so you can easily switch between multiple accounts.
-
--   `--login login`
-
-    Your Legimi login.
-    If you don't provide login from command line, it will be read from configuration file.
-    If it is missing in configuration file as well, you will be asked to provide it during command execution.
-    It will be then stored in configuration file (after successful login), so you don't have to repeat it during future command runs.
-    If you do provide login from command line, it will not be written to configuration file.
-
--   `--password password`
-
-    Your Legimi password.
-    Same logic as for login applies.
-    Note that login and password are stored in configuration file as plain text (file is readable only by its owner).
-    Password that can't be stored in configuration file unchanged (e.g. surrounded by quotes) is not saved - provide it with this switch instead.
-
--   `--debug`
-
-    Enable debugging mode.
-    In debugging mode, selected information about exchanged requests and responses is printed to stderr.
-    Currently, probably the most useful information is contained within session response.
-
-> [!NOTE]
-> You can give switches with one (`-config`) or two dashes (`--config`).
-
-### Commands
-
-Available commands are:
-
--   `list`
-
-    List books currently on your Legimi shelf.
-    Books downloaded with legimi-go are marked with date of last download.
-    Number of downloads left in subscription period is shown below the list.
-
--   `download <id> ...`
-
-    Download book(s) given their id(s). Book id can be obtained by listing books (first value in book entry line).
-    Note that Legimi removes book from the list (but not from your shelf on Legimi website) once its download is requested,
-    even if download fails. Metadata of listed books and downloads made with legimi-go are remembered in `config-books.json`
-    file next to configuration file, so such book is still shown by `list` and `select` commands (marked as hidden by Legimi)
-    and can be downloaded again.
-    Book file is downloaded to `<id>.mobi.part` and renamed to `<id>.mobi` only when it's complete and verified.
-
--   `select`
-
-    Select book(s) to download from interactive list, without typing their ids.
-    Books not downloaded yet are shown first. Type to filter by author or title (case and Polish diacritics are ignored),
-    move with arrow keys (also Page Up/Down, Home, End), select books with Space, press Enter to download selected books
-    (or the book under cursor if none is selected) and confirm with `y`. Press Esc to quit without downloading.
-
--   `refresh`
-
-    Register Kindle again (using Kindle Serial Number stored in configuration file, asked for if missing).
-    Legimi hides book from the list for a device once its download is requested; registering device again resets this,
-    so all books on your shelf are listed again. Kindle id stays the same for the same serial number.
-    `list` command tells when there are books hidden by Legimi.
-
--   `version`
-
-    Print legimi-go version.
-
-Providing command is mandatory, there is no default command.
-
-On the first command invocation, you will be prompted to provide credentials (if not given via command line switches, see [above](#options))
-and Kindle Serial Number (Settings -> Device Options -> Device Info in Kindle).
-Legimi Kindle Id will be automatically queried and stored in configuration file for future use.
-
-### Basic usage scenario
-
-1.  List books on your shelf
+2.  Wyświetl książki z półki:
 
     ```shell
     $ legimi-go list
     ```
 
-    If you're running script for the first time, or passing configuration file that does not have credentials yet, you will be prompted for login and password.
+    Przy pierwszym uruchomieniu program zapyta o login, hasło i numer seryjny Kindle, zobacz [Pierwsze uruchomienie](#pierwsze-uruchomienie).
 
-2.  Download selected book(s)
+3.  Pobierz książki, wybierając je z interaktywnej listy:
 
     ```shell
-    $ legimi-go download <book-id>
+    $ legimi-go select
     ```
 
-    Downloaded book will be saved to `<book-id>.mobi` file in current working directory.
+    albo podając ich numery id (pierwsza liczba w wyniku `list`):
 
-> [!TIP]
-> You can `cd` into mounted Kindle's `documents` directory before downloading to avoid copying files.
+    ```shell
+    $ legimi-go download <id> [<id> ...]
+    ```
 
-3.  Copy files to your Kindle's `documents` directory
+    Każda książka zapisuje się jako `<id>.mobi` w bieżącym katalogu.
 
-    This is optional if you have downloaded books while in `documents` directory.
+4.  Bezpiecznie odłącz Kindle. Pobrane książki pojawią się w jego bibliotece.
 
-## Limitations
+### Pierwsze uruchomienie
 
-Obviously, only subset of functionality of official Legimi app is supported.
+Gdy brakuje danych logowania albo id czytnika, program o nie pyta:
 
-Most error responses are not recognized / handled yet. This should improve in the future.
+-   **Login** i **hasło do Legimi** (hasło nie jest wyświetlane podczas wpisywania).
+    Jeśli nie podano ich opcjami `--login` / `--password`, program zapisuje je w [pliku konfiguracji](#pliki),
+    ale dopiero gdy Legimi je przyjmie (udane logowanie albo rejestracja Kindle).
+    Przerwane uruchomienie albo błędne hasło niczego nie zapisuje, a przy następnym uruchomieniu program po prostu zapyta ponownie.
+-   **Numer seryjny Kindle** (na czytniku: Ustawienia → Opcje urządzenia → Informacje o urządzeniu), bez spacji.
+    Program rejestruje Kindle w Legimi i otrzymuje jego id.
+    Zarówno id, jak i numer seryjny zapisuje w pliku konfiguracji.
+    Ten sam numer seryjny daje to samo id. Legimi ogranicza liczbę czytników Kindle w abonamencie.
+    Błędny numer seryjny może nie dać błędu, tylko id, które nie działa (pusta lista książek).
 
-Script is not intended to create account or register device unknown to the Legimi service. You should use official app for this.
-Device registration works, but may cause issues.
+W jednym uruchomieniu program pyta o dane logowania najwyżej raz.
 
-Number of book downloads left in subscription period is shown at the end of `list` command output.
-If you are trying to download more books than you limit, Legimi service will block downloads.
+## Polecenia
 
-## Troubleshooting
+### `list`
 
-If something is not working as expected, try to use `-debug` switch to get more information.
+Wyświetla książki z półki Legimi dostępne na Kindle w dwóch sekcjach: `Downloaded` (pobrane) i `Not downloaded` (niepobrane),
+według informacji z Legimi. Przy każdej sekcji podana jest liczba książek. Książki są posortowane według autora, a potem tytułu
+(polska kolejność alfabetyczna, bez rozróżniania wielkości liter). Każda linia zawiera id, autora i tytuł:
 
-Official Legimi app should be checked also, as it is a reference point. Using official app can also potentially fix issues (https://github.com/tp86/legimi-go/issues/3#issuecomment-2159820160).
+```
+Downloaded (12):
+ 1000001: Bolesław Prus - "Lalka" [downloaded with legimi-go 2026-01-15 18:30]
+  ...
+Not downloaded (34):
+ 1000002: Eliza Orzeszkowa - "Nad Niemnem"
+  ...
+Downloads left: 7 of 10
+```
 
-## Background
+-   `[downloaded with legimi-go <data>]` oznacza ostatnie udane pobranie tym programem.
+-   `[hidden by Legimi after download request]` oznacza książkę, której Legimi przestało pokazywać po prośbie o pobranie,
+    zobacz [Książki ukryte przez Legimi](#książki-ukryte-przez-legimi). Pod listą pojawia się wtedy liczba takich książek z podpowiedzią, żeby użyć `refresh`.
+-   `Downloads left: N of M` to liczba pobrań pozostałych w bieżącym okresie abonamentu.
+    Gdy Legimi jej nie przysyła (np. pakiet nie jest aktywny), wyświetla się `unknown (is your Legimi package active?)`.
+-   Przy pustej półce wyświetla się `No books on shelf.`
 
-Official Legimi app does not support Linux.
-I wanted to be able to download ebooks from Linux without the need to switch between OSes (or even have Windows installed).
+Dane książek z listy (id, wersja, tytuł, autor, status pobrania) program zapisuje w [pliku książek](#pliki).
 
-[First version](https://github.com/tp86/legimi/) of downloader was created in Lua.
-It worked fine, but proved to be hard to install sometimes (dependencies installed to different paths).
-It is also hard to maintain and it causes issues with Legimi protocol updates.
-Therefore, I decided to rewrite script in Go. I hope it will be easier to install, use and maintain.
+### `select`
 
-I extracted the logic of downloading books based on traffic exchanged between official Legimi application and service.
-As such, there are certainly missing pieces and features. Also, most error responses are not supported.
-See [Limitations](#limitations) for more missing features.
+Interaktywna lista do wybierania książek bez przepisywania numerów id. Wymaga interaktywnego terminala.
 
-## TODO
+Na górze są książki jeszcze niepobrane, niżej pobrane (przyciemnione, z dopiskiem `(downloaded)` albo datą pobrania).
+Pasek stanu pokazuje liczbę zaznaczonych książek, ile z nich nie było jeszcze pobranych i ile zostało pobrań.
+Gdy zaznaczonych niepobranych książek jest więcej niż pozostałych pobrań, pojawia się ostrzeżenie `NOT ENOUGH DOWNLOADS LEFT`.
 
-- [ ] handle more error responses from Legimi service
-- [ ] refactors
-- [ ] documentation update
-- [ ] increase test coverage
-- [ ] reuse session id if possible
-- [ ] parallel downloader
-- [x] handle occassional EOF while getting list of books
-- [ ] option to specify directory for downloaded books
+| Klawisz | Działanie |
+|---|---|
+| litery | filtrowanie po autorze i tytule (bez znaczenia wielkość liter i polskie znaki, np. `lukasz` znajdzie `Łukasz`) |
+| Backspace / Ctrl+U | usunięcie ostatniego znaku / wyczyszczenie filtra |
+| ↑ ↓, Page Up / Page Down, Home / End | ruch po liście |
+| Spacja (lub Tab) | zaznaczenie / odznaczenie książki pod kursorem |
+| Enter | pobranie zaznaczonych książek (albo książki pod kursorem, jeśli nic nie jest zaznaczone) |
+| `y` (lub `t`) | potwierdzenie pobrania; każdy inny klawisz wraca do listy |
+| Esc / Ctrl+C | wyjście bez pobierania |
+
+Zaznaczenia nie znikają przy zmianie filtra. Po potwierdzeniu książki są pobierane tak samo jak poleceniem `download`.
+
+### `download <id> ...`
+
+Pobiera książki o podanych numerach id do bieżącego katalogu, po kolei. Dla każdej książki:
+
+1.  Dane książki są pobierane z listy półki w Legimi. Jeśli Legimi już jej nie pokazuje
+    (zobacz [Książki ukryte przez Legimi](#książki-ukryte-przez-legimi)), tytuł i autor są brane z [pliku książek](#pliki),
+    a aktualna wersja jest ustalana przez pytanie Legimi o kolejne numery wersji.
+    Dzięki temu zawsze pobierane jest aktualne wydanie.
+2.  Program prosi Legimi o dane pobierania (adres i rozmiar pliku). Gdy Legimi wciąż przygotowuje plik
+    (`Waiting for book ... to be ready for download.`), program ponawia prośbę z rosnącymi odstępami przez około 3 minuty.
+3.  Plik jest pobierany w częściach po 80 KiB do `<id>.mobi.part`:
+    -   każda część zaczyna się od bajtu, na którym kończą się już pobrane dane,
+    -   program sprawdza, czy otrzymał dokładnie tę część, o którą prosił (Legimi odpowiada statusem `200` i samą żądaną częścią),
+    -   nieudana część (np. zerwane połączenie) jest ponawiana do 3 razy, od miejsca, w którym kończą się dane,
+    -   każde zapytanie ma limit czasu 30 sekund.
+4.  Plik jest zapisywany fizycznie na dysk i weryfikowany: dokładny rozmiar podany przez Legimi, nagłówek Mobipocket (`BOOKMOBI`),
+    spójny spis rekordów i znacznik końca pliku.
+5.  Dopiero wtedy dostaje nazwę `<id>.mobi`, zastępując ewentualny istniejący plik. Jeśli coś się nie uda, plik tymczasowy jest usuwany,
+    wyświetla się `failed`, a istniejący `<id>.mobi` pozostaje nietknięty.
+
+Postęp wygląda tak: `Downloading book <id>: "<tytuł>" ....... done` (kropka za każdą pobraną część).
+Przy pobieraniu wielu książek błąd jednej nie przerywa pozostałych; błędy są wypisywane na końcu.
+
+Prośba o pobranie i udane pobranie są zapisywane w [pliku książek](#pliki).
+Legimi wlicza do limitu abonamentu pobrania książek wcześniej niepobranych;
+w praktyce ponowne pobranie już pobranej książki nie zmniejszało limitu.
+
+### `refresh`
+
+Ponownie rejestruje Kindle, używając numeru seryjnego zapisanego w pliku konfiguracji (jeśli go brakuje, program o niego zapyta).
+To resetuje stan urządzenia w Legimi, więc książki ukryte przez Legimi znowu pojawiają się na liście.
+Id czytnika pozostaje takie samo; jeśli Legimi zwróci inne, program wyświetli ostrzeżenie.
+
+Zaraz po rejestracji Legimi może odpowiedzieć na kolejne zapytanie błędem `INTERNAL_ERROR`; wystarczy uruchomić polecenie ponownie.
+
+### `version`
+
+Wyświetla wersję programu.
+
+## Opcje
+
+Wszystkie opcje są nieobowiązkowe i można je podawać z jednym (`-config`) albo dwoma myślnikami (`--config`).
+
+-   `--config ścieżka`
+
+    Ścieżka do pliku konfiguracji, domyślnie `$HOME/.config/legimi-go/config.ini`.
+    Plik książek jest zapisywany obok niego, zobacz [Pliki](#pliki).
+    Różne pliki konfiguracji pozwalają przełączać się między kontami Legimi.
+
+-   `--login login`, `--password hasło`
+
+    Dane logowania do Legimi używane zamiast zapisanych w pliku konfiguracji i nigdy do niego niezapisywane.
+    Argumenty wiersza poleceń są widoczne dla innych użytkowników komputera (np. w `ps`) i trafiają do historii powłoki,
+    więc bezpieczniej jest wpisać hasło, gdy program o nie zapyta.
+
+-   `--debug`
+
+    Wypisuje na stderr wybrane informacje o zapytaniach i odpowiedziach:
+    odpowiedź sesji (stan abonamentu, limity urządzeń, pozostałe pobrania) i zapytanie o listę książek.
+    Nie wypisuje loginu, hasła ani id sesji.
+
+## Pliki
+
+| Plik | Zawartość |
+|---|---|
+| `~/.config/legimi-go/config.ini` (albo ścieżka z `--config`) | `login`, `password` (otwartym tekstem), `kindleId`, `kindleSerialNumber` |
+| `config-books.json` obok pliku konfiguracji (nazwa tworzona od nazwy pliku konfiguracji, np. `praca.ini` → `praca-books.json`) | dane książek widzianych na półce (wersja, tytuł, autor, status pobrania) oraz daty próśb o pobranie i pobrań tym programem |
+| `<id>.mobi` w bieżącym katalogu | pobrana książka |
+| `<id>.mobi.part` w bieżącym katalogu | książka w trakcie pobierania, usuwana przy błędzie (zostaje tylko po zabiciu programu) |
+
+Katalog konfiguracji jest tworzony z uprawnieniami `700`, a pliki konfiguracji i książek z `600`
+(dostęp tylko dla właściciela). Przy starcie program poprawia uprawnienia pliku konfiguracji utworzonego przez starsze wersje.
+
+Hasło, którego format INI nie potrafi odczytać bez zmian (np. otoczone cudzysłowami), nie jest zapisywane.
+Program wyświetla ostrzeżenie, a hasło trzeba wpisywać przy każdym uruchomieniu albo podać opcją `--password`.
+
+## Książki ukryte przez Legimi
+
+Legimi przestaje pokazywać książkę na liście dla danego urządzenia, gdy tylko poprosi ono o jej pobranie, nawet jeśli pobieranie się nie uda.
+Książka zostaje na półce na stronie Legimi, a limit pobrań się nie zmienia.
+Program radzi sobie z tym tak:
+
+-   książki ukryte po prośbie o pobranie wysłanej przez ten program są znowu pokazywane przez `list` i `select`
+    (na podstawie pliku książek), z adnotacją `[hidden by Legimi after download request]`, i można je pobrać ponownie,
+-   `refresh` sprawia, że Legimi znowu je pokazuje, przez ponowną rejestrację Kindle
+    (świeża konfiguracja na innym komputerze działa tak samo, bo przy pierwszym uruchomieniu rejestruje Kindle).
+
+Książki usunięte z półki przez Ciebie albo przez Legimi (np. po wygaśnięciu licencji) nie są pokazywane,
+bo program nigdy nie prosił o ich pobranie.
+
+## Ograniczenia
+
+-   Obsługiwana jest tylko część funkcji oficjalnej aplikacji, na podstawie odtworzonego protokołu.
+-   Program rozpoznaje tylko kilka kodów błędów Legimi (błędne dane logowania, błędne id Kindle, niedostępna wersja książki);
+    pozostałe wyświetla jako `error response received: <kod>`.
+-   Rejestracja Kindle tym programem działa, ale nie była pierwotnym celem narzędzia; punktem odniesienia jest oficjalna aplikacja.
+-   Legimi blokuje pobrania ponad limit abonamentu.
+-   Treść książek jest zaszyfrowana (DRM), a Legimi nie przysyła sumy kontrolnej, więc weryfikacja sprawdza rozmiar i strukturę pliku,
+    a nie jego treść.
+
+## Rozwiązywanie problemów
+
+-   Pusta lista: sprawdź, czy pakiet Legimi jest aktywny (znana wartość `Downloads left`) i czy numer seryjny Kindle jest poprawny.
+    Innym użytkownikom pomogło uruchomienie oficjalnej aplikacji Legimi albo świeża konfiguracja (`--config` z nową ścieżką)
+    ([tp86/legimi-go#3](https://github.com/tp86/legimi-go/issues/3)).
+-   `book ... is still being prepared by Legimi`: uruchom to samo polecenie `download` później.
+-   Szczegóły sesji pokaże opcja `--debug`.
+
+## Rozwój
+
+```shell
+$ go test ./...
+$ go vet ./...
+```
+
+Testy obejmują scenariusze pobierania z lokalnym serwerem HTTP, który symuluje zerwane połączenia i zachowanie serwera Legimi.
+
+## Historia
+
+Oficjalna aplikacja Legimi nie działa na Linuksie.
+Autor oryginału chciał pobierać książki z Linuksa bez przełączania się na inny system.
+[Pierwsza wersja](https://github.com/tp86/legimi/) powstała w Lua, a potem została przepisana na Go,
+żeby łatwiej ją instalować i utrzymywać. Logika została odtworzona na podstawie ruchu
+między oficjalną aplikacją Legimi a serwerem.
