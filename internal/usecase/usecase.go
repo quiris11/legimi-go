@@ -3,7 +3,7 @@ package usecase
 import "github.com/tp86/legimi-go/internal/model"
 
 type BookLister interface {
-	ListBooks() ([]model.BookMetadata, error)
+	ListBooks() ([]model.BookMetadata, model.DownloadLimit, error)
 }
 
 type BookDownloader interface {

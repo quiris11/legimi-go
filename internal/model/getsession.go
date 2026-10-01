@@ -80,6 +80,10 @@ func (s *Session) Decode(r io.Reader) (int, error) {
 	})
 }
 
+func (s Session) DownloadLimit() DownloadLimit {
+	return DownloadLimit{Left: s.downloadsLeft, Max: s.maxDownloads}
+}
+
 func (s Session) Type() uint16 {
 	return 0x4002
 }

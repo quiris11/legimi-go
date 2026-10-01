@@ -78,6 +78,7 @@ Available commands are:
 -   `list`
 
     List books currently on your Legimi shelf.
+    Number of downloads left in subscription period is shown below the list.
 
 -   `download <id> ...`
 
@@ -127,7 +128,7 @@ Most error responses are not recognized / handled yet. This should improve in th
 Script is not intended to create account or register device unknown to the Legimi service. You should use official app for this.
 Device registration works, but may cause issues.
 
-If you want to know how many book downloads are left in subscription period, you can use `-debug` switch and look for `downloads left` information under `Session response` section.
+Number of book downloads left in subscription period is shown at the end of `list` command output.
 If you are trying to download more books than you limit, Legimi service will block downloads.
 
 ## Troubleshooting

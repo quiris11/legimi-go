@@ -66,11 +66,11 @@ var (
 )
 
 func listBooks() error {
-	bookList, err := BookLister.ListBooks()
+	bookList, downloadLimit, err := BookLister.ListBooks()
 	if err != nil {
 		return err
 	}
-	BookListPresenter.Present(bookList)
+	BookListPresenter.Present(bookList, downloadLimit)
 	return nil
 }
 

@@ -6,7 +6,7 @@ import (
 )
 
 type Session interface {
-	GetSession() (string, error)
+	GetSession() (model.Session, error)
 }
 
 type Account interface {
@@ -22,7 +22,7 @@ type Book interface {
 }
 
 type BookListPresenter interface {
-	Present([]model.BookMetadata)
+	Present([]model.BookMetadata, model.DownloadLimit)
 }
 
 type DownloadPresenter interface {

@@ -19,19 +19,20 @@ type defaultBookService struct {
 	downloadPresenter service.DownloadPresenter
 }
 
-func (bs defaultBookService) ListBooks() ([]model.BookMetadata, error) {
+func (bs defaultBookService) ListBooks() ([]model.BookMetadata, model.DownloadLimit, error) {
 	// TODO better error handling
-	sessionId, err := bs.sessionService.GetSession()
+	session, err := bs.sessionService.GetSession()
 	if err != nil {
-		return nil, err
+		return nil, model.DownloadLimit{}, err
 	}
+	limit := session.DownloadLimit()
 	list := make([]model.BookMetadata, 0)
-	request := model.NewBookListRequest(sessionId)
+	request := model.NewBookListRequest(session.Id)
 	var bookList model.BookList
 	for {
 		err := bs.client.Exchange(request, &bookList)
 		if err != nil {
-			return list, err
+			return list, limit, err
 		}
 		if len(bookList) == 0 {
 			break
@@ -41,7 +42,7 @@ func (bs defaultBookService) ListBooks() ([]model.BookMetadata, error) {
 		}
 		request.NextPage = bookList[len(bookList)-1].NextPage
 	}
-	return list, nil
+	return list, limit, nil
 }
 
 func (bs defaultBookService) DownloadBooks(bookIds []uint64) error {
@@ -55,10 +56,11 @@ func (bs defaultBookService) DownloadBooks(bookIds []uint64) error {
 
 func (bs defaultBookService) downloadBook(id uint64) error {
 	// TODO concurrent downloader
-	sessionId, err := bs.sessionService.GetSession()
+	session, err := bs.sessionService.GetSession()
 	if err != nil {
 		return err
 	}
+	sessionId := session.Id
 	book, err := bs.getBookMetadata(sessionId, id)
 	if err != nil {
 		return err

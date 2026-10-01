@@ -8,9 +8,14 @@ import (
 
 type defaultBookListPresenter struct{}
 
-func (defaultBookListPresenter) Present(bookList []model.BookMetadata) {
+func (defaultBookListPresenter) Present(bookList []model.BookMetadata, downloadLimit model.DownloadLimit) {
 	for _, book := range bookList {
 		fmt.Printf("%8d: \"%s\", %s, downloaded: %t\n", book.Id, book.Title, book.Author, book.Downloaded)
+	}
+	if downloadLimit.IsKnown() {
+		fmt.Printf("\nDownloads left: %d of %d\n", downloadLimit.Left, downloadLimit.Max)
+	} else {
+		fmt.Println("\nDownloads left: unknown (is your Legimi package active?)")
 	}
 }
 

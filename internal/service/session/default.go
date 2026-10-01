@@ -11,17 +11,17 @@ type defaultSessionService struct {
 	client         api.Client
 }
 
-func (ss defaultSessionService) GetSession() (string, error) {
+func (ss defaultSessionService) GetSession() (model.Session, error) {
 	login, password := ss.accountService.GetCredentials()
 	kindleId, err := ss.accountService.GetKindleId()
 	if err != nil {
-		return "", err
+		return model.Session{}, err
 	}
 	var session model.Session
 	err = ss.client.Exchange(model.NewGetSessionRequest(login, password, kindleId), &session)
 	if err != nil {
-		return "", err
+		return model.Session{}, err
 	}
 	ss.accountService.SaveCredentials()
-	return session.Id, nil
+	return session, nil
 }
