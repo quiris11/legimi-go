@@ -80,6 +80,11 @@ func (s *Session) Decode(r io.Reader) (int, error) {
 	})
 }
 
+// NewSession creates session with given id and download limit (e.g. for tests)
+func NewSession(id string, limit DownloadLimit) Session {
+	return Session{Id: id, downloadsLeft: limit.Left, maxDownloads: limit.Max}
+}
+
 func (s Session) DownloadLimit() DownloadLimit {
 	return DownloadLimit{Left: s.downloadsLeft, Max: s.maxDownloads}
 }

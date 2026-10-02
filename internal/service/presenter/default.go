@@ -101,6 +101,14 @@ func (defaultBookDownloadPresenter) Fail(book model.BookMetadata) {
 	fmt.Println(" failed")
 }
 
+func (defaultBookDownloadPresenter) Skip(book model.BookMetadata, reason error) {
+	if book.Title != "" {
+		fmt.Printf("Book %d \"%s\" not downloaded: %v\n", book.Id, book.Title, reason)
+	} else {
+		fmt.Printf("Book %d not downloaded: %v\n", book.Id, reason)
+	}
+}
+
 func (defaultBookDownloadPresenter) Wait(book model.BookMetadata) {
 	fmt.Printf("Waiting for book %d: \"%s\" to be ready for download.\n", book.Id, book.Title)
 }

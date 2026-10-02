@@ -161,7 +161,13 @@ Jeśli folder nie istnieje (np. Kindle nie jest podłączony), program kończy s
     wyświetla się `failed`, a istniejący `<id>.mobi` pozostaje nietknięty.
 
 Postęp wygląda tak: `Downloading book <id>: "<tytuł>" ....... done` (kropka za każdą pobraną część).
-Przy pobieraniu wielu książek błąd jednej nie przerywa pozostałych; błędy są wypisywane na końcu.
+
+Błąd jednej książki nie przerywa pobierania pozostałych. Przy każdej nieudanej książce od razu pojawia się linia
+`Book <id> "<tytuł>" not downloaded: <powód>`, a na końcu podsumowanie z numerami id do ponowienia, np.
+`2 of 5 book(s) not downloaded: 123 456`.
+
+Gdy w abonamencie nie zostało żadne pobranie (`Downloads left: 0`), książki jeszcze niepobrane są pomijane
+**bez pytania Legimi**, więc nie znikają z listy; książki pobrane wcześniej są pobierane normalnie.
 
 Prośba o pobranie i udane pobranie są zapisywane w [pliku książek](#pliki).
 Legimi wlicza do limitu abonamentu pobrania książek wcześniej niepobranych;
@@ -267,8 +273,9 @@ bo program nigdy nie prosił o ich pobranie.
 ## Ograniczenia
 
 -   Obsługiwana jest tylko część funkcji oficjalnej aplikacji, na podstawie odtworzonego protokołu.
--   Program rozpoznaje tylko kilka kodów błędów Legimi (błędne dane logowania, błędne id Kindle, niedostępna wersja książki);
-    pozostałe wyświetla jako `error response received: <kod>`.
+-   Program rozpoznaje tylko kilka kodów błędów Legimi: 133 (błędne dane logowania), 135 (niedostępna wersja książki),
+    163 (błędne id Kindle), 295 (plik w przygotowaniu) i 5143 (Legimi odmówiło pobrania, najpewniej z powodu wyczerpanego limitu;
+    znaczenie ustalone z obserwacji). Pozostałe wyświetla jako `error response received: <kod>`.
 -   Rejestracja Kindle tym programem działa, ale nie była pierwotnym celem narzędzia; punktem odniesienia jest oficjalna aplikacja.
 -   Legimi blokuje pobrania ponad limit abonamentu.
 -   Treść książek jest zaszyfrowana (DRM), a Legimi nie przysyła sumy kontrolnej, więc weryfikacja sprawdza rozmiar i strukturę pliku,

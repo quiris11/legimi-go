@@ -197,13 +197,19 @@ func TestDownloadFailsOnServerMisbehavior(t *testing.T) {
 	}
 }
 
-type stubPresenter struct{ failed, ended bool }
+type stubPresenter struct {
+	failed, ended bool
+	skipped       []uint64
+}
 
 func (p *stubPresenter) Start(model.BookMetadata) {}
 func (p *stubPresenter) Part(model.BookMetadata)  {}
 func (p *stubPresenter) End(model.BookMetadata)   { p.ended = true }
 func (p *stubPresenter) Fail(model.BookMetadata)  { p.failed = true }
 func (p *stubPresenter) Wait(model.BookMetadata)  {}
+func (p *stubPresenter) Skip(book model.BookMetadata, _ error) {
+	p.skipped = append(p.skipped, book.Id)
+}
 
 func TestFailedDownloadKeepsExistingBookFile(t *testing.T) {
 	dir := t.TempDir()
@@ -226,7 +232,7 @@ func TestFailedDownloadKeepsExistingBookFile(t *testing.T) {
 	bs := defaultBookService{downloadPresenter: presenter}
 	err := bs.download(model.BookMetadata{Id: 123}, model.BookDownloadDetails{Url: srv.URL, Size: uint64(len(book))})
 
-	if err == nil || !strings.Contains(err.Error(), "book 123") || !presenter.failed {
+	if err == nil || !presenter.failed {
 		t.Errorf("download should fail, error: %v", err)
 	}
 	if data, _ := os.ReadFile("123.mobi"); !bytes.Equal(data, existing) {

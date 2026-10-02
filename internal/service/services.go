@@ -35,5 +35,7 @@ type DownloadPresenter interface {
 	Part(model.BookMetadata)
 	End(model.BookMetadata)
 	Fail(model.BookMetadata)
+	// Skip reports book that couldn't be downloaded; other books are downloaded anyway
+	Skip(model.BookMetadata, error)
 	Wait(model.BookMetadata)
 }

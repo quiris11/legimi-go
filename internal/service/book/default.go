@@ -1,9 +1,9 @@
 package book
 
 import (
-	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/tp86/legimi-go/internal/api"
@@ -60,23 +60,36 @@ func (bs defaultBookService) DownloadBooks(bookIds []uint64) error {
 	if err := bs.CheckDownloadDirectory(); err != nil {
 		return err
 	}
-	errs := make([]error, 0)
+	// failure of one book doesn't stop downloading the others
+	var failed []string
 	for _, id := range bookIds {
-		errs = append(errs, bs.downloadBook(id))
+		if book, err := bs.downloadBook(id); err != nil {
+			bs.downloadPresenter.Skip(book, err)
+			failed = append(failed, fmt.Sprint(id))
+		}
 	}
-	return errors.Join(errs...)
+	if len(failed) > 0 {
+		return fmt.Errorf("%d of %d book(s) not downloaded: %s", len(failed), len(bookIds), strings.Join(failed, " "))
+	}
+	return nil
 }
 
-func (bs defaultBookService) downloadBook(id uint64) error {
+// downloadBook returns metadata of the book (at least its id) also when download fails
+func (bs defaultBookService) downloadBook(id uint64) (model.BookMetadata, error) {
 	// TODO concurrent downloader
+	book := model.BookMetadata{Id: id}
 	session, err := bs.sessionService.GetSession()
 	if err != nil {
-		return err
+		return book, err
 	}
 	sessionId := session.Id
-	book, err := bs.getBookMetadata(sessionId, id)
+	book, err = bs.getBookMetadata(sessionId, id)
 	if err != nil {
-		return err
+		return model.BookMetadata{Id: id}, err
+	}
+	// asking Legimi for download would hide the book from listing, although download would be refused
+	if limit := session.DownloadLimit(); limit.IsKnown() && limit.Left == 0 && !book.Downloaded && book.LastDownloaded.IsZero() {
+		return book, fmt.Errorf("no downloads left in this subscription period (Legimi was not asked, book stays on the list)")
 	}
 	// Legimi hides book from shelf listing from now on, remember it
 	if err := bs.bookRepository.DownloadRequested(book); err != nil {
@@ -84,15 +97,15 @@ func (bs defaultBookService) downloadBook(id uint64) error {
 	}
 	bookDownloadDetails, err := bs.getBookDownloadDetails(sessionId, book)
 	if err != nil {
-		return err
+		return book, err
 	}
 	if err := bs.download(book, bookDownloadDetails); err != nil {
-		return err
+		return book, err
 	}
 	if err := bs.bookRepository.Downloaded(id); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: couldn't remember download of book %d: %v\n", id, err)
 	}
-	return nil
+	return book, nil
 }
 
 func (bs defaultBookService) getBookMetadata(sessionId string, bookId uint64) (model.BookMetadata, error) {

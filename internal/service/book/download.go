@@ -36,7 +36,7 @@ func checkDirectory(directory string) error {
 
 func (bs defaultBookService) download(book model.BookMetadata, downloadDetails model.BookDownloadDetails) error {
 	if downloadDetails.Size == 0 {
-		return fmt.Errorf("book %d: download size not received", book.Id)
+		return fmt.Errorf("download size not received")
 	}
 	bs.downloadPresenter.Start(book)
 	fileName := filepath.Join(bs.downloadDirectory, fmt.Sprintf("%d.mobi", book.Id))
@@ -53,7 +53,7 @@ func (bs defaultBookService) download(book model.BookMetadata, downloadDetails m
 	if err != nil {
 		os.Remove(partFileName)
 		bs.downloadPresenter.Fail(book)
-		return fmt.Errorf("book %d: %v", book.Id, err)
+		return err
 	}
 	bs.downloadPresenter.End(book)
 	return nil
