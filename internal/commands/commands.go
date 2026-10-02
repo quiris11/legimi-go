@@ -167,6 +167,18 @@ func printVersion() error {
 		return fmt.Errorf("Error getting version info")
 	} else {
 		fmt.Printf("Legimi-go version: %s\n", info.Main.Version)
+		// when built from git repository, commit allows to check if program is up to date with source
+		settings := make(map[string]string)
+		for _, setting := range info.Settings {
+			settings[setting.Key] = setting.Value
+		}
+		if revision := settings["vcs.revision"]; revision != "" {
+			modified := ""
+			if settings["vcs.modified"] == "true" {
+				modified = " with uncommitted changes"
+			}
+			fmt.Printf("Built from commit %.7s (%s)%s\n", revision, settings["vcs.time"], modified)
+		}
 	}
 	return nil
 }

@@ -12,22 +12,49 @@ Zobacz [Historia](#historia).
 
 ## Instalacja
 
-Zbuduj program ze źródeł (wymagane Go 1.22 lub nowsze):
+Program trzeba zbudować ze źródeł na każdym komputerze (wymagane Go 1.22 lub nowsze).
+Plik programu `legimi-go` nie jest przechowywany w repozytorium.
+
+### Linux (np. Fedora)
 
 ```shell
+$ sudo dnf install golang        # albo menedżer pakietów Twojej dystrybucji
 $ git clone https://github.com/quiris11/legimi-go.git
 $ cd legimi-go
 $ go build -o legimi-go .
 ```
 
-Bez zainstalowanego Go można zbudować go w kontenerze, np. przez Podmana:
+Bez instalowania Go można zbudować program w kontenerze, np. przez Podmana:
 
 ```shell
 $ podman run --rm -v "$PWD":/src:Z -w /src -e CGO_ENABLED=0 docker.io/library/golang:1.22 go build -o legimi-go .
 ```
 
-Skopiuj `legimi-go` do katalogu w `PATH` (np. `~/.local/bin`), żeby uruchamiać go z dowolnego miejsca.
-Po aktualizacji kodu zbuduj program ponownie (i skopiuj go jeszcze raz).
+Żeby uruchamiać program z dowolnego miejsca, skopiuj go do katalogu w `PATH`, np. `cp legimi-go ~/.local/bin/`.
+
+### macOS
+
+Go najprościej zainstalować przez [Homebrew](https://brew.sh):
+
+```shell
+$ brew install go
+$ git clone https://github.com/quiris11/legimi-go.git
+$ cd legimi-go
+$ go build -o legimi-go .
+```
+
+Program zbudowany na Linuksie nie działa na macOS (i odwrotnie), dlatego trzeba go zbudować na Macu.
+Żeby uruchamiać go z dowolnego miejsca, skopiuj go np. do `/usr/local/bin` (`sudo cp legimi-go /usr/local/bin/`).
+
+### Aktualizacja
+
+`git pull` pobiera tylko kod źródłowy - **po każdym `git pull` zbuduj program ponownie** (`go build -o legimi-go .`)
+i, jeśli go kopiowałeś, skopiuj go jeszcze raz. Bez tego nadal działa poprzednia wersja programu.
+Polecenie `legimi-go version` pokazuje commit, z którego zbudowano program, np. `Built from commit 186eff6 (2026-10-02T11:15:56Z)`;
+porównaj go z wynikiem `git log -1 --oneline`. Dopisek `with uncommitted changes` oznacza, że program zbudowano z lokalnie
+zmienionego kodu.
+
+Każdy komputer ma własną [konfigurację](#pliki) - login, hasło, ustawienia i pamięć książek nie są przenoszone między komputerami.
 
 Wydania (Releases) oraz `go install github.com/tp86/legimi-go@<wersja>` dają oryginalną wersję, bez zmian z tego forka.
 
@@ -42,13 +69,16 @@ Polecenie jest obowiązkowe, nie ma polecenia domyślnego.
 
 ### Typowe użycie
 
-1.  Podłącz Kindle. Żeby książki trafiały od razu na czytnik, ustaw jego katalog `documents` jako folder docelowy
-    (na Fedorze Kindle jest zwykle zamontowany w `/run/media/$USER/Kindle`). Wystarczy zrobić to raz:
+1.  Podłącz Kindle. Żeby książki trafiały od razu na czytnik, ustaw jego katalog `documents` jako folder docelowy.
+    Wystarczy zrobić to raz:
 
     ```shell
-    $ legimi-go dir /run/media/$USER/Kindle/documents
+    $ legimi-go dir /run/media/$USER/Kindle/documents     # Linux (np. Fedora)
+    $ legimi-go dir /Volumes/Kindle/documents             # macOS
     ```
 
+    Nowsze czytniki Kindle (mniej więcej od 2021 r., ze złączem USB-C) łączą się przez MTP i mogą nie pojawiać się jako dysk,
+    szczególnie na macOS. Wtedy pobieraj książki do zwykłego folderu, a na czytnik przenoś je np. przez Calibre.
     Zobacz [Folder docelowy](#folder-docelowy).
 
 2.  Wyświetl książki z półki:
@@ -73,7 +103,7 @@ Polecenie jest obowiązkowe, nie ma polecenia domyślnego.
 
     Każda książka zapisuje się jako `<tytuł> (<id>).mobi` w folderze docelowym, zobacz [Nazwy plików](#nazwy-plików).
 
-4.  Bezpiecznie odłącz Kindle. Pobrane książki pojawią się w jego bibliotece.
+4.  Bezpiecznie odłącz Kindle (na macOS: „Wysuń” w Finderze). Pobrane książki pojawią się w jego bibliotece.
 
 ### Pierwsze uruchomienie
 
@@ -196,7 +226,7 @@ Zaraz po rejestracji Legimi może odpowiedzieć na kolejne zapytanie błędem `I
 
 ### `version`
 
-Wyświetla wersję programu.
+Wyświetla wersję programu oraz commit (i jego datę), z którego program zbudowano, jeśli zbudowano go z repozytorium git.
 
 ## Opcje
 
