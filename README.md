@@ -326,9 +326,18 @@ bo program nigdy nie prosił o ich pobranie.
 ## Ograniczenia
 
 -   Obsługiwana jest tylko część funkcji oficjalnej aplikacji, na podstawie odtworzonego protokołu.
--   Program rozpoznaje tylko kilka kodów błędów Legimi: 133 (błędne dane logowania), 135 (niedostępna wersja książki),
-    163 (błędne id Kindle), 295 (plik w przygotowaniu) i 5143 (Legimi odmówiło pobrania, najpewniej z powodu wyczerpanego limitu;
-    znaczenie ustalone z obserwacji). Pozostałe wyświetla jako `error response received: <kod>`.
+-   Program rozpoznaje tylko kilka kodów błędów Legimi (znaczenie ustalone z obserwacji, protokół nie ma dokumentacji):
+
+    | Kod | Znaczenie |
+    |---|---|
+    | 133 | błędne dane logowania |
+    | 135 | niedostępna wersja książki |
+    | 139 | książka nie jest udostępniana do pobrania na Kindle (mimo aktywnego pakietu) |
+    | 163 | błędne id Kindle |
+    | 295 | plik książki jest jeszcze przygotowywany (program czeka i ponawia) |
+    | 5143 | Legimi odmówiło pobrania, najpewniej z powodu wyczerpanego limitu |
+
+    Pozostałe wyświetla jako `error response received: <kod>`.
 -   Rejestracja Kindle tym programem działa, ale nie była pierwotnym celem narzędzia; punktem odniesienia jest oficjalna aplikacja.
 -   Legimi blokuje pobrania ponad limit abonamentu.
 -   Treść książek jest zaszyfrowana (DRM), a Legimi nie przysyła sumy kontrolnej, więc weryfikacja sprawdza rozmiar i strukturę pliku,

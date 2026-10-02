@@ -15,6 +15,7 @@ var errorResponses = map[uint16]string{
 	133:  "invalid credentials",
 	163:  "invalid kindle id",
 	135:  "book version not available",
+	139:  "book is not available for download to Kindle (even with active package)",
 	5143: "Legimi refused download (probably no downloads left in subscription period)",
 }
 
