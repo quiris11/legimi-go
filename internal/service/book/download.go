@@ -39,7 +39,7 @@ func (bs defaultBookService) download(book model.BookMetadata, downloadDetails m
 		return fmt.Errorf("download size not received")
 	}
 	bs.downloadPresenter.Start(book)
-	fileName := filepath.Join(bs.downloadDirectory, fmt.Sprintf("%d.mobi", book.Id))
+	fileName := filepath.Join(bs.downloadDirectory, bookFileName(book))
 	// download to temporary file first, so that book file (possibly existing one)
 	// is replaced only with complete and verified download
 	partFileName := fileName + ".part"
@@ -55,7 +55,7 @@ func (bs defaultBookService) download(book model.BookMetadata, downloadDetails m
 		bs.downloadPresenter.Fail(book)
 		return err
 	}
-	bs.downloadPresenter.End(book)
+	bs.downloadPresenter.End(book, filepath.Base(fileName))
 	return nil
 }
 

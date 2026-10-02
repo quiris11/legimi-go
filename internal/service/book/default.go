@@ -120,7 +120,7 @@ func (bs defaultBookService) getBookMetadata(sessionId string, bookId uint64) (m
 		// Legimi removes book from shelf listing once its download is requested
 		book, ok := bs.bookRepository.Get(bookId)
 		if !ok {
-			book = model.BookMetadata{Id: bookId, Title: "(title unknown)"}
+			book = model.BookMetadata{Id: bookId, Title: unknownTitle}
 		}
 		// remembered version may be outdated (new edition released since), always download current one
 		book.Version, err = bs.findCurrentVersion(sessionId, bookId)

@@ -33,7 +33,7 @@ type BookSelector interface {
 type DownloadPresenter interface {
 	Start(model.BookMetadata)
 	Part(model.BookMetadata)
-	End(model.BookMetadata)
+	End(book model.BookMetadata, fileName string)
 	Fail(model.BookMetadata)
 	// Skip reports book that couldn't be downloaded; other books are downloaded anyway
 	Skip(model.BookMetadata, error)

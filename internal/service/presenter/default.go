@@ -93,8 +93,8 @@ func (defaultBookDownloadPresenter) Part(book model.BookMetadata) {
 	fmt.Print(".")
 }
 
-func (defaultBookDownloadPresenter) End(book model.BookMetadata) {
-	fmt.Println(" done")
+func (defaultBookDownloadPresenter) End(book model.BookMetadata, fileName string) {
+	fmt.Printf(" done: %s\n", fileName)
 }
 
 func (defaultBookDownloadPresenter) Fail(book model.BookMetadata) {

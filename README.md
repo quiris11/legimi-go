@@ -71,7 +71,7 @@ Polecenie jest obowiązkowe, nie ma polecenia domyślnego.
     $ legimi-go download <id> [<id> ...]
     ```
 
-    Każda książka zapisuje się jako `<id>.mobi` w folderze docelowym.
+    Każda książka zapisuje się jako `<tytuł> (<id>).mobi` w folderze docelowym, zobacz [Nazwy plików](#nazwy-plików).
 
 4.  Bezpiecznie odłącz Kindle. Pobrane książki pojawią się w jego bibliotece.
 
@@ -150,17 +150,18 @@ Jeśli folder nie istnieje (np. Kindle nie jest podłączony), program kończy s
     Dzięki temu zawsze pobierane jest aktualne wydanie.
 2.  Program prosi Legimi o dane pobierania (adres i rozmiar pliku). Gdy Legimi wciąż przygotowuje plik
     (`Waiting for book ... to be ready for download.`), program ponawia prośbę z rosnącymi odstępami przez około 3 minuty.
-3.  Plik jest pobierany w częściach po 80 KiB do `<id>.mobi.part`:
+3.  Plik jest pobierany w częściach po 80 KiB do pliku tymczasowego `<nazwa>.mobi.part`:
     -   każda część zaczyna się od bajtu, na którym kończą się już pobrane dane,
     -   program sprawdza, czy otrzymał dokładnie tę część, o którą prosił (Legimi odpowiada statusem `200` i samą żądaną częścią),
     -   nieudana część (np. zerwane połączenie) jest ponawiana do 3 razy, od miejsca, w którym kończą się dane,
     -   każde zapytanie ma limit czasu 30 sekund.
 4.  Plik jest zapisywany fizycznie na dysk i weryfikowany: dokładny rozmiar podany przez Legimi, nagłówek Mobipocket (`BOOKMOBI`),
     spójny spis rekordów i znacznik końca pliku.
-5.  Dopiero wtedy dostaje nazwę `<id>.mobi`, zastępując ewentualny istniejący plik. Jeśli coś się nie uda, plik tymczasowy jest usuwany,
-    wyświetla się `failed`, a istniejący `<id>.mobi` pozostaje nietknięty.
+5.  Dopiero wtedy dostaje docelową nazwę `<tytuł> (<id>).mobi` ([Nazwy plików](#nazwy-plików)), zastępując ewentualny istniejący plik
+    o tej nazwie. Jeśli coś się nie uda, plik tymczasowy jest usuwany, wyświetla się `failed`, a istniejący plik pozostaje nietknięty.
 
-Postęp wygląda tak: `Downloading book <id>: "<tytuł>" ....... done` (kropka za każdą pobraną część).
+Postęp wygląda tak: `Downloading book <id>: "<tytuł>" ....... done: <tytuł> (<id>).mobi` (kropka za każdą pobraną część,
+na końcu nazwa zapisanego pliku).
 
 Błąd jednej książki nie przerywa pobierania pozostałych. Przy każdej nieudanej książce od razu pojawia się linia
 `Book <id> "<tytuł>" not downloaded: <powód>`, a na końcu podsumowanie z numerami id do ponowienia, np.
@@ -229,14 +230,36 @@ Wszystkie opcje są nieobowiązkowe i można je podawać z jednym (`-config`) al
 |---|---|
 | `~/.config/legimi-go/config.ini` (albo ścieżka z `--config`) | `login`, `password` (otwartym tekstem), `kindleId`, `kindleSerialNumber`; `downloadDir` (ustawiany poleceniem `dir`) |
 | `config-books.json` obok pliku konfiguracji (nazwa tworzona od nazwy pliku konfiguracji, np. `praca.ini` → `praca-books.json`) | dane książek widzianych na półce (wersja, tytuł, autor, status pobrania) oraz daty próśb o pobranie i pobrań tym programem |
-| `<id>.mobi` w folderze docelowym | pobrana książka |
-| `<id>.mobi.part` w folderze docelowym | książka w trakcie pobierania, usuwana przy błędzie (zostaje tylko po zabiciu programu) |
+| `<tytuł> (<id>).mobi` w folderze docelowym | pobrana książka, zobacz [Nazwy plików](#nazwy-plików) |
+| `<tytuł> (<id>).mobi.part` w folderze docelowym | książka w trakcie pobierania, usuwana przy błędzie (zostaje tylko po zabiciu programu) |
 
 Katalog konfiguracji jest tworzony z uprawnieniami `700`, a pliki konfiguracji i książek z `600`
 (dostęp tylko dla właściciela). Przy starcie program poprawia uprawnienia pliku konfiguracji utworzonego przez starsze wersje.
 
 Hasło, którego format INI nie potrafi odczytać bez zmian (np. otoczone cudzysłowami), nie jest zapisywane.
 Program wyświetla ostrzeżenie, a hasło trzeba wpisywać przy każdym uruchomieniu albo podać opcją `--password`.
+
+## Nazwy plików
+
+Pobrana książka nazywa się `<tytuł> (<id>).mobi`, np. `Lalka (1000001).mobi`. Id w nawiasie sprawia, że dwie różne książki
+o tym samym tytule nie nadpiszą się nawzajem, a ponowne pobranie tej samej książki zastępuje jej plik.
+
+Tytuł jest dostosowywany do systemu plików Kindle (FAT32) i innych systemów:
+
+| W tytule | W nazwie pliku |
+|---|---|
+| `:` | ` -` |
+| `"` | `'` |
+| `/`, `\`, `\|` | `-` |
+| `?`, `*`, `<`, `>`, znaki sterujące | usuwane |
+| kilka spacji, tabulatory | jedna spacja |
+| kropki i spacje na końcu | usuwane |
+
+Polskie litery zostają. Bardzo długi tytuł jest skracany do 200 bajtów. Gdy tytuł jest nieznany
+(książka ukryta przez Legimi, której program wcześniej nie widział), plik nazywa się `<id>.mobi`.
+
+Książki pobrane wcześniejszymi wersjami programu mają nazwy `<id>.mobi`; ponowne pobranie zapisuje je pod nową nazwą,
+a stary plik zostaje.
 
 ## Folder docelowy
 

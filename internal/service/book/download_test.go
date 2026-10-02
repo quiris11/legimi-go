@@ -202,11 +202,11 @@ type stubPresenter struct {
 	skipped       []uint64
 }
 
-func (p *stubPresenter) Start(model.BookMetadata) {}
-func (p *stubPresenter) Part(model.BookMetadata)  {}
-func (p *stubPresenter) End(model.BookMetadata)   { p.ended = true }
-func (p *stubPresenter) Fail(model.BookMetadata)  { p.failed = true }
-func (p *stubPresenter) Wait(model.BookMetadata)  {}
+func (p *stubPresenter) Start(model.BookMetadata)       {}
+func (p *stubPresenter) Part(model.BookMetadata)        {}
+func (p *stubPresenter) End(model.BookMetadata, string) { p.ended = true }
+func (p *stubPresenter) Fail(model.BookMetadata)        { p.failed = true }
+func (p *stubPresenter) Wait(model.BookMetadata)        {}
 func (p *stubPresenter) Skip(book model.BookMetadata, _ error) {
 	p.skipped = append(p.skipped, book.Id)
 }
